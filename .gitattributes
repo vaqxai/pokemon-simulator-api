@@ -1,2 +1,2 @@
 # Ignore coverage for repo lang composition
-coverage/* linguist-vendored
+coverage/** linguist-vendored
