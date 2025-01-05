@@ -1,4 +1,4 @@
-![coverage/badges/flat.svg]
+![](coverage/badges/flat.svg)
 
 # Pokemon Simulator
 
