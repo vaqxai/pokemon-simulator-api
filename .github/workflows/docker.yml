@@ -8,7 +8,7 @@ name: Docker
 on:
   workflow_run:
     workflows:
-    - "Rust"
+    - "Rust Build & Test"
     types:
     - completed
 
