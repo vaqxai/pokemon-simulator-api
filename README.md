@@ -1,6 +1,6 @@
 ![](coverage/badges/flat.svg) ![](https://github.com/vaqxai/pokemon-simulator/actions/workflows/rust.yml/badge.svg)
 
-Docs available [here](https://vaqxai.github.io/pokemon-simulator/index.html)
+Docs available [here](https://vaqxai.github.io/pokemon-simulator/pokemon_simulator/index.html)
 
 # Pokemon Simulator
 
