@@ -14,6 +14,8 @@ for cross-origin requests.
 - CORS support for cross-origin requests
 - JSON response formatting
 
+## [Docs](vaqxai.github.io/pokemon-simulator/index.html)
+
 ## API Endpoints
 
 - `GET /api/` - Health check endpoint that returns OK status
