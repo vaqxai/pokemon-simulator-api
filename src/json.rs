@@ -4,7 +4,12 @@ use rocket::response::content::RawJson;
 use serde::Serialize;
 
 #[derive(Serialize)]
+/// Represents the status of a JSON response.
+///
+/// This enum is used to indicate whether an operation was successful (`Ok`)
+/// or resulted in an error with an associated message (`Error`).
 pub enum Status {
+    /// Represents a successful operation with no errors.
     Ok,
     /// Represents an error with a message describing the error.
     Error(String),
@@ -70,6 +75,8 @@ impl<T: std::error::Error> From<T> for JsonStatus<'static> {
     }
 }
 
+/// A type alias for a Result that contains either a successful JsonStatus or an error JsonStatus.
+/// The success case has a lifetime parameter 'a, while the error case has a static lifetime.
 pub type JsonResult<'a> = Result<JsonStatus<'a>, JsonStatus<'static>>;
 
 /// Implementation of `JsonStatus` with a static lifetime.

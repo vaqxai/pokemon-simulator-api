@@ -18,7 +18,10 @@
 
 use std::str::FromStr;
 
-mod json;
+/// Module containing JSON-related types and functionality for API responses.
+pub mod json;
+
+#[doc(hidden)]
 mod tests;
 use crate::json::JsonResult;
 use json::JsonStatus;
