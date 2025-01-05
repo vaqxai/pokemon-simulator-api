@@ -1,5 +1,7 @@
 ![](coverage/badges/flat.svg) ![](https://github.com/vaqxai/pokemon-simulator/actions/workflows/rust.yml/badge.svg)
 
+Docs available [here](https://vaqxai.github.io/pokemon-simulator/index.html)
+
 # Pokemon Simulator
 
 A Pokemon battle simulator API server.
@@ -13,8 +15,6 @@ for cross-origin requests.
 - RESTful API endpoints for Pokemon battle simulation
 - CORS support for cross-origin requests
 - JSON response formatting
-
-## [Docs](vaqxai.github.io/pokemon-simulator/index.html)
 
 ## API Endpoints
 
