@@ -21,6 +21,12 @@ use std::str::FromStr;
 /// Module containing JSON-related types and functionality for API responses.
 pub mod json;
 
+/// Module containing Pokemon-related types.
+pub mod pokemon;
+
+/// Module containing Trainer-related types.
+pub mod trainer;
+
 #[doc(hidden)]
 mod tests;
 use crate::json::JsonResult;
