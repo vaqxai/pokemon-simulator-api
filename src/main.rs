@@ -27,6 +27,9 @@ pub mod pokemon;
 /// Module containing Trainer-related types.
 pub mod trainer;
 
+/// Module defining basic database traits and operations
+pub mod database;
+
 #[doc(hidden)]
 mod tests;
 use crate::json::JsonResult;

@@ -1,6 +1,8 @@
 mod api;
 mod json;
 
+mod database;
+
 /// Test if rocket can be built
 #[test]
 fn test_rocket() {
