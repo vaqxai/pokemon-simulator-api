@@ -3,12 +3,12 @@ use neo4rs::{Graph, Node};
 use std::fs;
 
 /// Represents a handle to the database connection
-pub struct DBHandle {
+pub struct DbHandle {
     /// The neo4j graph database connection
     pub inner: Graph,
 }
 
-impl DBHandle {
+impl DbHandle {
     /// Connects to the database using the configuration in `config.toml`
     pub async fn connect() -> Result<Self> {
         let cfg = fs::read_to_string("config.toml")?.parse::<toml::Table>()?;
@@ -33,14 +33,22 @@ impl DBHandle {
     }
 }
 
-async fn get_db_node(kind: &str, database_identifier: &str) -> Result<Node> {
-    let db = DBHandle::connect().await?;
+async fn get_db_node(id_name: &str, kind: &str, database_identifier: &str) -> Result<Node> {
+    let db = DbHandle::connect().await?;
+
+    let mut database_identifier = database_identifier.to_string();
+
+    // if the identifier is not a number, put it in quotes
+    if database_identifier.parse::<u64>().is_err() {
+        database_identifier = format!("'{}'", database_identifier);
+    }
+
     let mut q_out = db
         .inner
         .execute(
             format!(
-                "MATCH (n:{}) WHERE n.id = {} RETURN n;",
-                kind, database_identifier
+                "MATCH (n:{}) WHERE n.{} = {} RETURN n;",
+                kind, id_name, database_identifier
             )
             .into(),
         )
@@ -56,26 +64,35 @@ async fn get_db_node(kind: &str, database_identifier: &str) -> Result<Node> {
 pub trait DbRepr {
     /// The kind of node in the Neo4j graph that represents this type
     const DB_NODE_KIND: &'static str;
+
+    /// The name of the identifier field
+    const DB_IDENTIFIER_FIELD: &'static str = "id";
+
+    /// Get the identifier of the database node
+    fn get_identifier(&self) -> String;
 }
 
 /// Denotes that a type can be retrieved from the database
 pub trait DbGet: DbRepr {
     /// this function should make a new instance of the type from a neo4j node
-    fn from_db_node(node: neo4rs::Node) -> Result<Self>
+    fn from_db_node(node: neo4rs::Node) -> impl Future<Output = Result<Self>> + Send
     where
         Self: Sized;
 
     /// the default impl of this function gets the first node of this type from the database
     /// matching the given identifier (the node needs to have an "id" field)
-    fn get_first(
-        database_identifier: &str,
-    ) -> impl std::future::Future<Output = Result<Self>> + Send
+    fn get_first(database_identifier: &str) -> impl Future<Output = Result<Self>> + Send
     where
         Self: Sized,
     {
         async move {
-            let node = get_db_node(Self::DB_NODE_KIND, database_identifier).await?;
-            Self::from_db_node(node)
+            let node = get_db_node(
+                Self::DB_IDENTIFIER_FIELD,
+                Self::DB_NODE_KIND,
+                database_identifier,
+            )
+            .await?;
+            Self::from_db_node(node).await
         }
     }
 }
@@ -93,7 +110,7 @@ pub trait DbPut: DbRepr {
     {
         let put_args = self.put_args();
         async move {
-            let db = DBHandle::connect().await?;
+            let db = DbHandle::connect().await?;
             let mut q_res = db
                 .inner
                 .execute(format!("CREATE (n:{} {})", Self::DB_NODE_KIND, put_args).into())
@@ -112,13 +129,14 @@ pub trait DbDelete: DbRepr {
         Self: Sized,
     {
         async move {
-            let db = DBHandle::connect().await?;
+            let db = DbHandle::connect().await?;
             let mut q_res = db
                 .inner
                 .execute(
                     format!(
-                        "MATCH (n:{}) WHERE n.id = {} DELETE n;",
+                        "MATCH (n:{}) WHERE n.{} = {} DELETE n;",
                         Self::DB_NODE_KIND,
+                        Self::DB_IDENTIFIER_FIELD,
                         database_identifier
                     )
                     .into(),
@@ -149,14 +167,15 @@ pub trait DbUpdate: DbRepr {
         let update_args = self.update_args();
         async move {
             // first get old database node
-            let db = DBHandle::connect().await?;
+            let db = DbHandle::connect().await?;
 
             let mut q_res = db
                 .inner
                 .execute(
                     format!(
-                        "MATCH (n:{}) WHERE n.id = {} SET {}",
+                        "MATCH (n:{}) WHERE n.{} = {} SET {}",
                         Self::DB_NODE_KIND,
+                        Self::DB_IDENTIFIER_FIELD,
                         database_identifier,
                         update_args
                     )
@@ -167,6 +186,131 @@ pub trait DbUpdate: DbRepr {
             let _none = q_res.next().await?;
 
             Ok(())
+        }
+    }
+}
+
+/// Denotes the ability to link this type to another using database relationships
+pub trait DbLink<T>: DbRepr
+where
+    T: DbRepr + DbGet,
+{
+    /// Adds a new link (does nothing if the link already exists) from 'self' to 'other'
+    fn link_to(&self, other: &T, relationship_name: &str) -> impl Future<Output = Result<()>> {
+        async move {
+            let db = DbHandle::connect().await?;
+
+            let mut q_res = db
+                .inner
+                .execute(
+                    format!(
+                        "MATCH (a:{}), (b:{}) WHERE a.{} = {} AND b.{} = {} MERGE (a)-[:{}]->(b);",
+                        Self::DB_NODE_KIND,
+                        T::DB_NODE_KIND,
+                        Self::DB_IDENTIFIER_FIELD,
+                        self.get_identifier(),
+                        T::DB_IDENTIFIER_FIELD,
+                        other.get_identifier(),
+                        relationship_name
+                    )
+                    .into(),
+                )
+                .await?;
+
+            let _none = q_res.next().await?;
+
+            Ok(())
+        }
+    }
+
+    /// Removes a link from 'self' to 'other' with the given relationship name
+    fn unlink_from(&self, other: &T, relationship_name: &str) -> impl Future<Output = Result<()>> {
+        async move {
+            let db = DbHandle::connect().await?;
+
+            let mut q_res = db
+                .inner
+                .execute(
+                    format!(
+                        "MATCH (a:{}), (b:{}) WHERE a.{} = {} AND b.{} = {} MATCH (a)-[r:{}]->(b) DELETE r;",
+                        Self::DB_NODE_KIND,
+                        T::DB_NODE_KIND,
+                        Self::DB_IDENTIFIER_FIELD,
+                        self.get_identifier(),
+                        T::DB_IDENTIFIER_FIELD,
+                        other.get_identifier(),
+                        relationship_name
+                    )
+                    .into(),
+                )
+                .await?;
+
+            let _none = q_res.next().await?;
+
+            Ok(())
+        }
+    }
+
+    /// Checks whether a link exists from 'self' to 'other' with the given relationship name
+    fn is_linked_by(
+        &self,
+        other: &T,
+        relationship_name: &str,
+    ) -> impl Future<Output = Result<bool>> {
+        async move {
+            let db = DbHandle::connect().await?;
+
+            let mut q_res = db
+                .inner
+                .execute(
+                    format!(
+                        "MATCH (a:{}), (b:{}) WHERE a.{} = {} AND b.{} = {} RETURN exists((a)-[:{}]->(b));",
+                        Self::DB_NODE_KIND,
+                        T::DB_NODE_KIND,
+                        Self::DB_IDENTIFIER_FIELD,
+                        self.get_identifier(),
+                        T::DB_IDENTIFIER_FIELD,
+                        other.get_identifier(),
+                        relationship_name
+                    )
+                    .into(),
+                )
+                .await?;
+
+            // One row if successful
+            Ok(q_res.next().await?.is_some())
+        }
+    }
+
+    /// Returns the representations of nodes this node is linked to via the
+    /// given relationship name
+    fn get_linked_to(&self, relationship_name: &str) -> impl Future<Output = Result<Vec<T>>> {
+        async move {
+            let db = DbHandle::connect().await?;
+
+            let mut q_res = db
+                .inner
+                .execute(
+                    format!(
+                        "MATCH (a:{} {{ {} : {} }})-[:{}]->(b:{}) RETURN b;",
+                        Self::DB_NODE_KIND,
+                        Self::DB_IDENTIFIER_FIELD,
+                        self.get_identifier(),
+                        relationship_name,
+                        T::DB_NODE_KIND
+                    )
+                    .into(),
+                )
+                .await?;
+
+            let mut nodes = vec![];
+
+            while let Some(row) = q_res.next().await? {
+                let node = row.get::<Node>("b")?;
+                nodes.push(T::from_db_node(node).await?);
+            }
+
+            Ok(nodes)
         }
     }
 }

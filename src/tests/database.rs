@@ -1,8 +1,8 @@
 #[tokio::test]
 async fn test_db_handle() {
-    use crate::database::DBHandle;
+    use crate::database::DbHandle;
 
-    let db = DBHandle::connect().await;
+    let db = DbHandle::connect().await;
 
     if let Err(e) = db {
         panic!("Error: {:?}", e);
@@ -11,12 +11,12 @@ async fn test_db_handle() {
 
 #[tokio::test]
 async fn use_db_handle() {
-    use crate::database::DBHandle;
+    use crate::database::DbHandle;
     use neo4rs::Node;
 
     println!("Creating Handle");
 
-    let db: DBHandle = DBHandle::connect().await.unwrap();
+    let db: DbHandle = DbHandle::connect().await.unwrap();
 
     let mut q_out = db
         .inner
@@ -46,10 +46,14 @@ async fn test_db_get() {
 
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
+
+        fn get_identifier(&self) -> String {
+            self.id.to_string()
+        }
     }
 
     impl DbGet for Status {
-        fn from_db_node(node: Node) -> Result<Self> {
+        async fn from_db_node(node: Node) -> Result<Self> {
             Ok(Self {
                 id: node.get("id")?,
                 status: node.get("status")?,
@@ -71,6 +75,10 @@ async fn test_db_repr() {
 
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
+
+        fn get_identifier(&self) -> String {
+            "1".to_string()
+        }
     }
 
     assert_eq!(Status::DB_NODE_KIND, "STATUS");
@@ -90,6 +98,10 @@ async fn test_db_put() {
 
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
+
+        fn get_identifier(&self) -> String {
+            self.id.to_string()
+        }
     }
 
     impl DbPut for Status {
@@ -99,7 +111,7 @@ async fn test_db_put() {
     }
 
     impl DbGet for Status {
-        fn from_db_node(node: Node) -> Result<Self> {
+        async fn from_db_node(node: Node) -> Result<Self> {
             Ok(Self {
                 id: node.get("id")?,
                 status: node.get("status")?,
@@ -126,7 +138,7 @@ async fn test_db_put() {
 
     // delete status from db
 
-    let db = crate::database::DBHandle::connect().await.unwrap();
+    let db = crate::database::DbHandle::connect().await.unwrap();
 
     let mut q_res = db
         .inner
@@ -168,12 +180,16 @@ async fn test_db_delete() {
 
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
+
+        fn get_identifier(&self) -> String {
+            self.id.to_string()
+        }
     }
 
     impl DbDelete for Status {}
 
     impl DbGet for Status {
-        fn from_db_node(node: Node) -> Result<Self> {
+        async fn from_db_node(node: Node) -> Result<Self> {
             Ok(Self {
                 id: node.get("id")?,
                 status: node.get("status")?,
@@ -216,10 +232,14 @@ async fn test_db_update() {
 
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
+
+        fn get_identifier(&self) -> String {
+            self.id.to_string()
+        }
     }
 
     impl DbGet for Status {
-        fn from_db_node(node: Node) -> Result<Self> {
+        async fn from_db_node(node: Node) -> Result<Self> {
             Ok(Self {
                 id: node.get("id")?,
                 status: node.get("status")?,
