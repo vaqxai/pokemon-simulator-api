@@ -20,16 +20,12 @@ impl DBHandle {
             cfg["database"]["port"]
         );
 
-        println!("Connecting to {}", url);
-
         let uname = cfg["database"]["username"]
             .as_str()
             .ok_or(anyhow::anyhow!("No username"))?;
         let pass = cfg["database"]["password"]
             .as_str()
             .ok_or(anyhow::anyhow!("No password"))?;
-
-        println!("Logging in as {}", uname);
 
         let graph = Graph::new(url, uname, pass).await?;
 
@@ -154,21 +150,6 @@ pub trait DbUpdate: DbRepr {
         async move {
             // first get old database node
             let db = DBHandle::connect().await?;
-
-            println!(
-                "Setting {}, update args: {}",
-                database_identifier, update_args
-            );
-
-            println!(
-                "Full Query: {}",
-                format!(
-                    "MATCH (n:{}) WHERE n.id = {} SET {}",
-                    Self::DB_NODE_KIND,
-                    database_identifier,
-                    update_args
-                )
-            );
 
             let mut q_res = db
                 .inner
