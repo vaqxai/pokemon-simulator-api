@@ -16,13 +16,13 @@ pub struct Pokemon {
     /// This field is not public because it should be set by database link
     /// operations only
     /// Use the new fn to construct a Pokemon with types
-    primary_type: PokemonType,
+    primary_type: DbPromise<PokemonType>,
 
     /// The secondary type of the Pokemon
     /// This field is not public because it should be set by database link
     /// operations only
     /// Use the new fn to construct a Pokemon with types
-    secondary_type: Option<PokemonType>,
+    secondary_type: Option<DbPromise<PokemonType>>,
     /// The base stats of the Pokemon
     pub stats: PokemonStats,
 }
@@ -124,7 +124,7 @@ impl DbGet for Pokemon {
 
             let primary_type = Self::get_linked_by_id(
                 &PokemonPokemonTypeRelationship::PrimaryType,
-                identifier.clone(),
+                format!("'{}'", identifier.clone()),
             )
             .await?
             .into_iter()
@@ -132,7 +132,7 @@ impl DbGet for Pokemon {
             .ok_or(anyhow::anyhow!("No primary type found for Pokemon"))?;
             let secondary_type = Self::get_linked_by_id(
                 &PokemonPokemonTypeRelationship::SecondaryType,
-                identifier.clone(),
+                format!("'{}'", identifier.clone()),
             )
             .await?
             .into_iter()
@@ -232,11 +232,11 @@ pub struct PokemonType {
 
     /// The types that this Pokemon type is strong against
     /// This field is not public because it should be set by database link
-    strong_against: Vec<PokemonType>,
+    strong_against: Vec<DbPromise<PokemonType>>,
 
     /// The types that this Pokemon type is weak against
     /// This field is not public because it should be set by database link
-    weak_against: Vec<PokemonType>,
+    weak_against: Vec<DbPromise<PokemonType>>,
 }
 
 impl PokemonType {

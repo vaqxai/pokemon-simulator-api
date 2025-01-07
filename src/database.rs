@@ -107,6 +107,29 @@ pub trait DbGet: DbRepr {
             Self::from_db_node(node).await
         }
     }
+
+    /// Get all nodes of this type from the database
+    fn get_all() -> impl Future<Output = Result<Vec<Self>>>
+    where
+        Self: Sized,
+    {
+        async move {
+            let db = DbHandle::connect().await?;
+            let mut q_out = db
+                .inner
+                .execute(format!("MATCH (n:{}) RETURN n;", Self::DB_NODE_KIND).into())
+                .await?;
+
+            let mut nodes = vec![];
+
+            while let Some(row) = q_out.next().await? {
+                let node = row.get::<Node>("n")?;
+                nodes.push(Self::from_db_node(node).await?);
+            }
+
+            Ok(nodes)
+        }
+    }
 }
 
 /// Denotes that a type can be inserted into the database
@@ -357,7 +380,7 @@ where
     fn get_linked_by_id(
         relationship_type: &Self::RelationshipType,
         database_identifier: String,
-    ) -> impl Future<Output = Result<Vec<T>>> {
+    ) -> impl Future<Output = Result<Vec<DbPromise<T>>>> {
         async move {
             let db = DbHandle::connect().await?;
 
@@ -380,7 +403,7 @@ where
 
             while let Some(row) = q_res.next().await? {
                 let node = row.get::<Node>("b")?;
-                nodes.push(T::from_db_node(node).await?);
+                nodes.push(T::get_db_promise(node).await?);
             }
 
             Ok(nodes)
@@ -394,5 +417,33 @@ where
         relationship_type: &Self::RelationshipType,
     ) -> impl Future<Output = Result<Vec<T>>> {
         Self::get_linked_by_id(relationship_type, self.get_identifier())
+    }
+}
+
+pub struct DbPromise<T: DbRepr> {
+    identifier: String,
+    resolve_fn: Box<dyn FnOnce(&'static str, String) -> Result<T>>,
+}
+
+pub trait Promised: DbRepr {
+    /// get function to resolve promises of this type
+    fn get_resolve_fn() -> Box<dyn FnOnce(&'static str, String) -> Result<Self>>
+    where
+        Self: Sized;
+
+    fn promise(database_identifier: &str) -> DbPromise<Self>
+    where
+        Self: Sized,
+    {
+        DbPromise {
+            identifier: database_identifier.to_string(),
+            resolve_fn: Self::get_resolve_fn(),
+        }
+    }
+}
+
+impl<T: DbRepr> DbPromise<T> {
+    pub async fn resolve(self) -> Result<T> {
+        (self.resolve_fn)(T::DB_NODE_KIND, self.identifier)
     }
 }

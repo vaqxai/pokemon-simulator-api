@@ -34,8 +34,10 @@ pub mod database;
 #[doc(hidden)]
 mod tests;
 use crate::json::JsonResult;
+use database::DbGet;
 use json::JsonStatus;
 use log::info;
+use pokemon::Pokemon;
 use rocket_cors::{AllowedMethods, AllowedOrigins, CorsOptions};
 
 #[macro_use]
@@ -69,7 +71,9 @@ fn make_cors() -> CorsOptions {
 async fn rocket() -> _ {
     let cors = make_cors().to_cors().expect("Error creating CORS fairing");
 
-    rocket::build().attach(cors).mount("/api", routes![index])
+    rocket::build()
+        .attach(cors)
+        .mount("/api", routes![index, get_pokemons])
 }
 
 /// Health check endpoint that returns an OK status.
@@ -88,4 +92,12 @@ async fn rocket() -> _ {
 pub async fn index<'a>() -> JsonResult<'a> {
     info!("Request to /api");
     Ok(JsonStatus::ok::<String>(None))
+}
+
+/// Endpoint for getting a list of all Pokemon.
+#[get("/pokemons")]
+pub async fn get_pokemons<'a>() -> JsonResult<'a> {
+    info!("Request to /api/pokemons");
+    let pokemons = Pokemon::get_all().await.map_err(JsonStatus::from_anyhow)?;
+    Ok(JsonStatus::data_owned(pokemons))
 }
