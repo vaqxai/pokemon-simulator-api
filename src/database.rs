@@ -403,7 +403,8 @@ where
 
             while let Some(row) = q_res.next().await? {
                 let node = row.get::<Node>("b")?;
-                nodes.push(T::get_db_promise(node).await?);
+                // todo: promise must get identifier from node
+                nodes.push(T::promise(node).await?);
             }
 
             Ok(nodes)
@@ -430,6 +431,8 @@ pub trait Promised: DbRepr {
     fn get_resolve_fn() -> Box<dyn FnOnce(&'static str, String) -> Result<Self>>
     where
         Self: Sized;
+
+    // todo identifier from node
 
     fn promise(database_identifier: &str) -> DbPromise<Self>
     where
