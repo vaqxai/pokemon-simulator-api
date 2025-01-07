@@ -13,6 +13,7 @@
 //! # API Endpoints
 //!
 //! - `GET /api/` - Health check endpoint that returns OK status
+#![feature(associated_type_defaults)]
 #![deny(missing_docs)]
 #![deny(rustdoc::missing_crate_level_docs)]
 

@@ -36,7 +36,6 @@ async fn use_db_handle() {
 #[tokio::test]
 async fn test_db_get() {
     use crate::database::{DbGet, DbRepr};
-    use anyhow::Result;
     use neo4rs::Node;
 
     struct Status {
@@ -53,10 +52,12 @@ async fn test_db_get() {
     }
 
     impl DbGet for Status {
-        async fn from_db_node(node: Node) -> Result<Self> {
-            Ok(Self {
-                id: node.get("id")?,
-                status: node.get("status")?,
+        fn from_db_node(node: Node) -> Self::Future {
+            Box::pin(async move {
+                Ok(Self {
+                    id: node.get("id")?,
+                    status: node.get("status")?,
+                })
             })
         }
     }
@@ -87,7 +88,6 @@ async fn test_db_repr() {
 #[tokio::test]
 async fn test_db_put() {
     use crate::database::{DbGet, DbPut, DbRepr};
-    use anyhow::Result;
     use neo4rs::Node;
 
     #[derive(Debug)]
@@ -111,10 +111,12 @@ async fn test_db_put() {
     }
 
     impl DbGet for Status {
-        async fn from_db_node(node: Node) -> Result<Self> {
-            Ok(Self {
-                id: node.get("id")?,
-                status: node.get("status")?,
+        fn from_db_node(node: Node) -> Self::Future {
+            Box::pin(async move {
+                Ok(Self {
+                    id: node.get("id")?,
+                    status: node.get("status")?,
+                })
             })
         }
     }
@@ -164,7 +166,6 @@ async fn test_db_put() {
 #[tokio::test]
 async fn test_db_delete() {
     use crate::database::{DbDelete, DbGet, DbPut, DbRepr};
-    use anyhow::Result;
     use neo4rs::Node;
 
     struct Status {
@@ -189,10 +190,12 @@ async fn test_db_delete() {
     impl DbDelete for Status {}
 
     impl DbGet for Status {
-        async fn from_db_node(node: Node) -> Result<Self> {
-            Ok(Self {
-                id: node.get("id")?,
-                status: node.get("status")?,
+        fn from_db_node(node: Node) -> Self::Future {
+            Box::pin(async move {
+                Ok(Self {
+                    id: node.get("id")?,
+                    status: node.get("status")?,
+                })
             })
         }
     }
@@ -216,7 +219,6 @@ async fn test_db_delete() {
 #[tokio::test]
 async fn test_db_update() {
     use crate::database::{DbDelete, DbGet, DbPut, DbRepr, DbUpdate};
-    use anyhow::Result;
     use neo4rs::Node;
 
     struct Status {
@@ -239,10 +241,12 @@ async fn test_db_update() {
     }
 
     impl DbGet for Status {
-        async fn from_db_node(node: Node) -> Result<Self> {
-            Ok(Self {
-                id: node.get("id")?,
-                status: node.get("status")?,
+        fn from_db_node(node: Node) -> Self::Future {
+            Box::pin(async move {
+                Ok(Self {
+                    id: node.get("id")?,
+                    status: node.get("status")?,
+                })
             })
         }
     }

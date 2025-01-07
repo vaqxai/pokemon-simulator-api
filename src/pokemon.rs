@@ -1,6 +1,8 @@
+use std::pin::Pin;
+
 use serde::{Deserialize, Serialize};
 
-use crate::database::{DbDelete, DbGet, DbHandle, DbLink, DbPut, DbRepr, DbUpdate};
+use crate::database::{AsDbString, DbDelete, DbGet, DbLink, DbPut, DbRepr, DbUpdate};
 
 use anyhow::Result;
 
@@ -9,10 +11,18 @@ use anyhow::Result;
 pub struct Pokemon {
     /// The name of the Pokemon
     pub name: String,
+
     /// The primary type of the Pokemon
-    pub primary_type: PokemonType,
-    /// The secondary type of the Pokemon, if it has one
-    pub secondary_type: Option<PokemonType>,
+    /// This field is not public because it should be set by database link
+    /// operations only
+    /// Use the new fn to construct a Pokemon with types
+    primary_type: PokemonType,
+
+    /// The secondary type of the Pokemon
+    /// This field is not public because it should be set by database link
+    /// operations only
+    /// Use the new fn to construct a Pokemon with types
+    secondary_type: Option<PokemonType>,
     /// The base stats of the Pokemon
     pub stats: PokemonStats,
 }
@@ -22,7 +32,7 @@ impl DbRepr for Pokemon {
     const DB_IDENTIFIER_FIELD: &'static str = "name";
 
     fn get_identifier(&self) -> String {
-        self.name.clone()
+        format!("'{}'", self.name)
     }
 }
 
@@ -39,86 +49,66 @@ impl DbPut for Pokemon {
 impl DbDelete for Pokemon {}
 
 impl Pokemon {
-    fn get_primary_type_link_query(&self) -> String {
-        format!(
-            "MATCH (p:Pokemon), (t:PokemonType) WHERE p.name = '{}' AND t.name = '{}' MERGE (p)-[:PrimaryType]->(t);",
-            self.name, self.primary_type.name
+    /// Creates a new pokemon, places it in the database
+    /// Does nothing on duplicate
+    /// and links its types to the database
+    pub async fn new_to_db(
+        name: String,
+        primary_type: PokemonType,
+        secondary_type: Option<PokemonType>,
+        stats: PokemonStats,
+    ) -> Result<Self> {
+        let mut new = Self {
+            name,
+            primary_type,
+            secondary_type,
+            stats,
+        };
+
+        // put the pokemon in the db
+        new.put_self().await?;
+
+        // link types to db
+        new.link_to(
+            &new.primary_type.clone(),
+            &PokemonPokemonTypeRelationship::PrimaryType,
         )
-    }
-
-    fn get_secondary_type_link_query(&self) -> String {
-        format!(
-            "MATCH (p:Pokemon), (t:PokemonType) WHERE p.name = '{}' AND t.name = '{}' MERGE (p)-[:SecondaryType]->(t);",
-            self.name,
-            self.secondary_type.as_ref().unwrap().name
-        )
-    }
-
-    fn remove_primary_type_link_query(&self) -> String {
-        format!(
-            "MATCH (p:Pokemon)-[r:PrimaryType]->(t:PokemonType) WHERE p.name = '{}' DELETE r;",
-            self.name
-        )
-    }
-
-    fn remove_secondary_type_link_query(&self) -> String {
-        format!(
-            "MATCH (p:Pokemon)-[r:SecondaryType]->(t:PokemonType) WHERE p.name = '{}' DELETE r;",
-            self.name
-        )
-    }
-
-    /// Creates database relationships for pokemon types
-    pub async fn link_types_to_db(&self) -> Result<()> {
-        // ensure both types are in the database
-        // first find out if primary type is in the db
-        let primary_type = PokemonType::get_first(&self.primary_type.name).await;
-
-        if primary_type.is_err() {
-            self.primary_type.put_self().await?;
+        .await?;
+        if let Some(secondary_type) = &new.secondary_type {
+            new.link_to(
+                &secondary_type.clone(),
+                &PokemonPokemonTypeRelationship::SecondaryType,
+            )
+            .await?;
         }
 
-        // then check if secondary type is in the db, but only if we have one
-        if let Some(secondary_type) = &self.secondary_type {
-            let secondary_type = PokemonType::get_first(&secondary_type.name).await;
-            if secondary_type.is_err() {
-                self.secondary_type.as_ref().unwrap().put_self().await?;
+        Ok(new)
+    }
+
+    /// Change the secondary type of a pokemon
+    /// This is possible because the secondary type is an Option
+    pub async fn set_secondary_type(
+        &mut self,
+        new_secondary_type: Option<PokemonType>,
+    ) -> Result<()> {
+        if self.secondary_type.is_some() {
+            self.unlink_from(
+                &self.secondary_type.clone().unwrap(),
+                &PokemonPokemonTypeRelationship::SecondaryType,
+            )
+            .await?;
+        }
+
+        match new_secondary_type {
+            Some(nst) => {
+                self.link_to(&nst, &PokemonPokemonTypeRelationship::SecondaryType)
+                    .await?;
+
+                self.secondary_type = Some(nst);
             }
-        }
-
-        // link the types to the pokemon
-        let db_handle = DbHandle::connect().await?;
-
-        // check if types aren't linked yet and remove old links if they are
-        let mut q_res = db_handle
-            .inner
-            .execute(self.remove_primary_type_link_query().into())
-            .await?;
-
-        let _none = q_res.next().await?;
-
-        let mut q_res = db_handle
-            .inner
-            .execute(self.remove_secondary_type_link_query().into())
-            .await?;
-
-        let _none = q_res.next().await?;
-
-        // link the types to the pokemon
-        let mut q_res = db_handle
-            .inner
-            .execute(self.get_primary_type_link_query().into())
-            .await?;
-
-        let _none = q_res.next().await?;
-
-        if let Some(_secondary_type) = &self.secondary_type {
-            let mut q_res = db_handle
-                .inner
-                .execute(self.get_secondary_type_link_query().into())
-                .await?;
-
-            let _none = q_res.next().await?;
+            None => {
+                self.secondary_type = None;
+            }
         }
 
         Ok(())
@@ -126,18 +116,95 @@ impl Pokemon {
 }
 
 impl DbGet for Pokemon {
-    async fn from_db_node(node: neo4rs::Node) -> Result<Self> {
-        Ok(Self {
-            name: node.get("name")?,
-            primary_type: PokemonType::from_db_node(node.get("primary_type")?)?,
-            secondary_type: PokemonType::from_db_node(node.get("primary_type")?)?,
-            stats: PokemonStats {
-                hp: node.get("hp")?,
-                attack: node.get("attack")?,
-                defense: node.get("defense")?,
-                agility: node.get("agility")?,
-            },
+    type Future = Pin<Box<dyn Future<Output = Result<Self>> + Send>>;
+
+    fn from_db_node(node: neo4rs::Node) -> Self::Future {
+        Box::pin(async move {
+            let identifier = node.get::<String>("name")?;
+
+            let primary_type = Self::get_linked_by_id(
+                &PokemonPokemonTypeRelationship::PrimaryType,
+                identifier.clone(),
+            )
+            .await?
+            .into_iter()
+            .next()
+            .ok_or(anyhow::anyhow!("No primary type found for Pokemon"))?;
+            let secondary_type = Self::get_linked_by_id(
+                &PokemonPokemonTypeRelationship::SecondaryType,
+                identifier.clone(),
+            )
+            .await?
+            .into_iter()
+            .next();
+
+            Ok(Self {
+                name: identifier,
+                primary_type,
+                secondary_type,
+                stats: PokemonStats {
+                    hp: node.get("hp")?,
+                    attack: node.get("attack")?,
+                    defense: node.get("defense")?,
+                    agility: node.get("agility")?,
+                },
+            })
         })
+    }
+}
+
+/// Represents the relationship between a Pokemon and its type
+pub enum PokemonPokemonTypeRelationship {
+    /// Represents the primary type of a Pokemon
+    PrimaryType,
+    /// Represents the secondary type of a Pokemon
+    SecondaryType,
+}
+
+impl AsDbString for PokemonPokemonTypeRelationship {
+    fn as_db_string(&self) -> &'static str {
+        match self {
+            PokemonPokemonTypeRelationship::PrimaryType => "PrimaryType",
+            PokemonPokemonTypeRelationship::SecondaryType => "SecondaryType",
+        }
+    }
+}
+
+impl DbLink<PokemonType> for Pokemon {
+    type RelationshipType = PokemonPokemonTypeRelationship;
+
+    fn link_side_effect(
+        &mut self,
+        other: &PokemonType,
+        relationship_type: &Self::RelationshipType,
+    ) -> Result<()> {
+        match relationship_type {
+            PokemonPokemonTypeRelationship::PrimaryType => {
+                self.primary_type = other.clone();
+                Ok(())
+            }
+            PokemonPokemonTypeRelationship::SecondaryType => {
+                self.secondary_type = Some(other.clone());
+                Ok(())
+            }
+        }
+    }
+
+    fn unlink_side_effect(
+        &mut self,
+        _other: &PokemonType,
+        relationship_type: &Self::RelationshipType,
+    ) -> Result<()> {
+        match relationship_type {
+            PokemonPokemonTypeRelationship::PrimaryType => {
+                // TODO: Implement a way to change a pokemon's primary type
+                Err(anyhow::anyhow!("Primary type cannot be unlinked"))
+            }
+            PokemonPokemonTypeRelationship::SecondaryType => {
+                self.secondary_type = None;
+                Ok(())
+            }
+        }
     }
 }
 
@@ -164,10 +231,28 @@ pub struct PokemonType {
     pub name: String,
 
     /// The types that this Pokemon type is strong against
-    pub strong_against: Vec<PokemonType>,
+    /// This field is not public because it should be set by database link
+    strong_against: Vec<PokemonType>,
 
     /// The types that this Pokemon type is weak against
-    pub weak_against: Vec<PokemonType>,
+    /// This field is not public because it should be set by database link
+    weak_against: Vec<PokemonType>,
+}
+
+impl PokemonType {
+    /// Creates a new PokemonType and places it in the database
+    /// Does nothing on duplicate
+    pub async fn new_to_db(name: String) -> Result<Self> {
+        let new = Self {
+            name,
+            strong_against: vec![],
+            weak_against: vec![],
+        };
+
+        new.put_self().await?;
+
+        Ok(new)
+    }
 }
 
 impl DbRepr for PokemonType {
@@ -175,64 +260,100 @@ impl DbRepr for PokemonType {
     const DB_IDENTIFIER_FIELD: &'static str = "name";
 
     fn get_identifier(&self) -> String {
-        self.name.clone()
+        format!("'{}'", self.name)
     }
 }
 
-impl DbLink<PokemonType> for PokemonType {}
+/// Represents the relationship between two Pokemon types
+pub enum PokemonTypeRelationship {
+    /// Represents a type that is strong against another type
+    StrongAgainst,
+    /// Represents a type that is weak against another type
+    WeakAgainst,
+}
+
+impl AsDbString for PokemonTypeRelationship {
+    fn as_db_string(&self) -> &'static str {
+        match self {
+            PokemonTypeRelationship::StrongAgainst => "StrongAgainst",
+            PokemonTypeRelationship::WeakAgainst => "WeakAgainst",
+        }
+    }
+}
+
+impl DbLink<PokemonType> for PokemonType {
+    type RelationshipType = PokemonTypeRelationship;
+
+    fn link_side_effect(
+        &mut self,
+        other: &PokemonType,
+        relationship_type: &Self::RelationshipType,
+    ) -> Result<()> {
+        match relationship_type {
+            Self::RelationshipType::StrongAgainst => {
+                self.strong_against.push(other.clone());
+                Ok(())
+            }
+            Self::RelationshipType::WeakAgainst => {
+                self.weak_against.push(other.clone());
+                Ok(())
+            }
+        }
+    }
+
+    fn unlink_side_effect(
+        &mut self,
+        other: &PokemonType,
+        relationship_type: &Self::RelationshipType,
+    ) -> Result<()> {
+        match relationship_type {
+            Self::RelationshipType::StrongAgainst => {
+                self.strong_against.retain(|t| t.name != other.name);
+                Ok(())
+            }
+            Self::RelationshipType::WeakAgainst => {
+                self.weak_against.retain(|t| t.name != other.name);
+                Ok(())
+            }
+        }
+    }
+}
 
 impl DbGet for PokemonType {
-    async fn from_db_node(node: neo4rs::Node) -> Result<Self> {
-        let mut new = Self {
-            name: node.get("name")?,
-            strong_against: vec![],
-            weak_against: vec![],
-        };
+    type Future = Pin<Box<dyn Future<Output = Result<Self>> + Send>>;
 
-        let strong_against = new.get_linked_to("strong_against").await?;
-        let weak_against = new.get_linked_to("weak_against").await?;
+    fn from_db_node(node: neo4rs::Node) -> Self::Future {
+        Box::pin(async move {
+            let mut new = Self {
+                name: node.get("name")?,
+                strong_against: vec![],
+                weak_against: vec![],
+            };
 
-        new.strong_against = strong_against;
-        new.weak_against = weak_against;
+            let strong_against = new
+                .get_linked_to(&PokemonTypeRelationship::StrongAgainst)
+                .await?;
+            let weak_against = new
+                .get_linked_to(&PokemonTypeRelationship::WeakAgainst)
+                .await?;
 
-        Ok(new)
+            new.strong_against = strong_against;
+            new.weak_against = weak_against;
+
+            Ok(new)
+        })
     }
 }
 
 impl DbPut for PokemonType {
     fn put_args(&self) -> String {
-        format!(
-            "{{name: '{}', strong_against: {}, weak_against: {}}}",
-            self.name,
-            self.strong_against
-                .iter()
-                .map(|t| format!("'{}'", t.name))
-                .collect::<Vec<String>>()
-                .join(", "),
-            self.weak_against
-                .iter()
-                .map(|t| format!("'{}'", t.name))
-                .collect::<Vec<String>>()
-                .join(", ")
-        )
+        format!("{{name: '{}'}}", self.name)
     }
 }
 
 impl DbUpdate for PokemonType {
     fn update_args(&self) -> String {
-        format!(
-            "SET strong_against = {}, weak_against = {}",
-            self.strong_against
-                .iter()
-                .map(|t| format!("'{}'", t.name))
-                .collect::<Vec<String>>()
-                .join(", "),
-            self.weak_against
-                .iter()
-                .map(|t| format!("'{}'", t.name))
-                .collect::<Vec<String>>()
-                .join(", ")
-        )
+        format!("SET name = '{}'", self.name)
     }
 }
 
