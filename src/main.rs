@@ -34,7 +34,7 @@ pub mod database;
 #[doc(hidden)]
 mod tests;
 use crate::json::JsonResult;
-use database::DbGet;
+use database::get::DbGet;
 use json::JsonStatus;
 use log::info;
 use pokemon::Pokemon;

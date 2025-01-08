@@ -35,7 +35,7 @@ async fn use_db_handle() {
 
 #[tokio::test]
 async fn test_db_get() {
-    use crate::database::{DbGet, DbRepr};
+    use crate::database::{DbRepr, get::DbGet};
     use neo4rs::Node;
 
     struct Status {
@@ -59,6 +59,11 @@ async fn test_db_get() {
                     status: node.get("status")?,
                 })
             })
+        }
+
+        // Panics: if supplied node does not have an "id" field
+        fn identifier_from_node(node: Node) -> String {
+            node.get::<String>("id").unwrap().to_string()
         }
     }
 
@@ -87,7 +92,7 @@ async fn test_db_repr() {
 
 #[tokio::test]
 async fn test_db_put() {
-    use crate::database::{DbGet, DbPut, DbRepr};
+    use crate::database::{DbRepr, get::DbGet, put::DbPut};
     use neo4rs::Node;
 
     #[derive(Debug)]
@@ -118,6 +123,11 @@ async fn test_db_put() {
                     status: node.get("status")?,
                 })
             })
+        }
+
+        /// panics: if supplied node does not have an "id" field
+        fn identifier_from_node(node: Node) -> String {
+            node.get::<String>("id").unwrap().to_string()
         }
     }
 
@@ -165,7 +175,7 @@ async fn test_db_put() {
 
 #[tokio::test]
 async fn test_db_delete() {
-    use crate::database::{DbDelete, DbGet, DbPut, DbRepr};
+    use crate::database::{DbRepr, delete::DbDelete, get::DbGet, put::DbPut};
     use neo4rs::Node;
 
     struct Status {
@@ -198,6 +208,11 @@ async fn test_db_delete() {
                 })
             })
         }
+
+        /// panics: if supplied node does not have an "id" field
+        fn identifier_from_node(node: Node) -> String {
+            node.get::<String>("id").unwrap().to_string()
+        }
     }
 
     let status = Status {
@@ -218,7 +233,7 @@ async fn test_db_delete() {
 
 #[tokio::test]
 async fn test_db_update() {
-    use crate::database::{DbDelete, DbGet, DbPut, DbRepr, DbUpdate};
+    use crate::database::{DbRepr, delete::DbDelete, get::DbGet, put::DbPut, update::DbUpdate};
     use neo4rs::Node;
 
     struct Status {
@@ -248,6 +263,11 @@ async fn test_db_update() {
                     status: node.get("status")?,
                 })
             })
+        }
+
+        /// panics: if supplied node does not have an "id" field
+        fn identifier_from_node(node: Node) -> String {
+            node.get::<String>("id").unwrap().to_string()
         }
     }
 

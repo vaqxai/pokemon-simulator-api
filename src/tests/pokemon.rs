@@ -1,45 +1,52 @@
 #[tokio::test]
 async fn test_create_pokemon() {
-    use crate::database::DbLink;
+    use crate::database::{link::DbLink, promise::Promised};
     use crate::pokemon::Pokemon;
-    use crate::pokemon::PokemonStats;
-    use crate::pokemon::PokemonType;
-    use crate::pokemon::PokemonTypeRelationship;
+    use crate::pokemon::ptype::{self, PokemonType};
+    use crate::pokemon::stats::PokemonStats;
 
     let mut water = PokemonType::new_to_db("Water".to_string()).await.unwrap();
+
+    let water_promise = water.as_promise();
+
     let mut electric = PokemonType::new_to_db("Electric".to_string())
         .await
         .unwrap();
+
+    let electric_promise = electric.as_promise();
+
     let mut fire = PokemonType::new_to_db("Fire".to_string()).await.unwrap();
 
+    let fire_promise = fire.as_promise();
+
     water
-        .link_to(&electric, &PokemonTypeRelationship::StrongAgainst)
+        .link_to(&electric_promise, &ptype::Relationship::StrongAgainst)
         .await
         .unwrap();
     water
-        .link_to(&fire, &PokemonTypeRelationship::WeakAgainst)
+        .link_to(&fire_promise, &ptype::Relationship::WeakAgainst)
         .await
         .unwrap();
 
     electric
-        .link_to(&water, &PokemonTypeRelationship::WeakAgainst)
+        .link_to(&water_promise, &ptype::Relationship::WeakAgainst)
         .await
         .unwrap();
     electric
-        .link_to(&fire, &PokemonTypeRelationship::StrongAgainst)
+        .link_to(&fire_promise, &ptype::Relationship::StrongAgainst)
         .await
         .unwrap();
 
-    fire.link_to(&water, &PokemonTypeRelationship::StrongAgainst)
+    fire.link_to(&water_promise, &ptype::Relationship::StrongAgainst)
         .await
         .unwrap();
-    fire.link_to(&electric, &PokemonTypeRelationship::WeakAgainst)
+    fire.link_to(&electric_promise, &ptype::Relationship::WeakAgainst)
         .await
         .unwrap();
 
     let _pikachu = Pokemon::new_to_db(
         "Pikachu".to_string(),
-        electric.clone(),
+        electric.as_promise(),
         None,
         PokemonStats {
             hp: 35,
