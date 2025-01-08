@@ -16,6 +16,7 @@ use crate::database::{
     link::DbLink,
     promise::{Promise, Promised},
     put::DbPut,
+    sanitize,
 };
 
 use anyhow::Result;
@@ -57,7 +58,11 @@ impl DbPut for Pokemon {
     fn put_args(&self) -> String {
         format!(
             "{{ name: '{}', hp: {}, attack: {}, defense: {}, agility: {} }}",
-            self.name, self.stats.hp, self.stats.attack, self.stats.defense, self.stats.agility
+            sanitize(&self.name),
+            self.stats.hp,
+            self.stats.attack,
+            self.stats.defense,
+            self.stats.agility
         )
     }
 }

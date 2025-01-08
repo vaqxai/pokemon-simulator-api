@@ -45,7 +45,14 @@ impl DbHandle {
             .as_str()
             .ok_or(anyhow::anyhow!("No password"))?;
 
-        let graph = Graph::new(url, uname, pass).await?;
+        let dbconfig = neo4rs::ConfigBuilder::new()
+            .fetch_size(1000)
+            .uri(url)
+            .user(uname)
+            .password(pass)
+            .build()?;
+
+        let graph = Graph::connect(dbconfig).await?;
 
         Ok(Self { inner: graph })
     }
@@ -68,4 +75,15 @@ pub trait DbRepr {
     /// Get the identifier of the database node
     /// In a database friendly format (strings in single quotes)
     fn get_identifier(&self) -> String;
+}
+
+/// Sanitize a string for use in a cypher query
+pub fn sanitize(s: &str) -> String {
+    // 1. remove all backslashes
+    let mut s = s.replace("\\", "");
+    // 2. escape all quotes and double quotes
+    s = s.replace("'", "\\'");
+    s = s.replace("\"", "\\\"");
+
+    s
 }

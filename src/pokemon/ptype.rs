@@ -9,6 +9,7 @@ use crate::database::{
     link::DbLink,
     promise::{Promise, Promised},
     put::DbPut,
+    sanitize,
     update::DbUpdate,
 };
 
@@ -141,13 +142,13 @@ impl DbGet for PokemonType {
 
 impl DbPut for PokemonType {
     fn put_args(&self) -> String {
-        format!("{{name: '{}'}}", self.name)
+        format!("{{name: '{}'}}", sanitize(&self.name))
     }
 }
 
 impl DbUpdate for PokemonType {
     fn update_args(&self) -> String {
-        format!("SET name = '{}'", self.name)
+        format!("SET name = '{}'", sanitize(&self.name))
     }
 }
 

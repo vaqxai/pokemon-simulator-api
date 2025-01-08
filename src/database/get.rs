@@ -2,7 +2,7 @@ use anyhow::Result;
 use neo4rs::Node;
 use std::pin::Pin;
 
-use super::{DbHandle, DbRepr};
+use super::{DbHandle, DbRepr, sanitize};
 
 async fn get_db_node(id_name: &str, kind: &str, database_identifier: &str) -> Result<Node> {
     let db = DbHandle::connect().await?;
@@ -19,7 +19,9 @@ async fn get_db_node(id_name: &str, kind: &str, database_identifier: &str) -> Re
         .execute(
             format!(
                 "MATCH (n:{}) WHERE n.{} = {} RETURN n;",
-                kind, id_name, database_identifier
+                sanitize(kind),
+                sanitize(id_name),
+                sanitize(&database_identifier)
             )
             .into(),
         )
@@ -73,17 +75,24 @@ pub trait DbGet: DbRepr {
     {
         async move {
             let db = DbHandle::connect().await?;
-            let mut q_out = db
-                .inner
-                .execute(format!("MATCH (n:{}) RETURN n;", Self::DB_NODE_KIND).into())
-                .await?;
+
+            let query = format!("MATCH (n:{}) RETURN n;", Self::DB_NODE_KIND);
+
+            debug!("GetAll Query: {}", query);
+
+            let mut q_out = db.inner.execute(query.into()).await?;
+
+            debug!("GetAll Query Finished");
 
             let mut nodes = vec![];
 
             while let Some(row) = q_out.next().await? {
                 let node = row.get::<Node>("n")?;
                 nodes.push(Self::from_db_node(node).await?);
+                debug!("Total nodes: {}", nodes.len());
             }
+
+            debug!("GetAll Result Count: {}", nodes.len());
 
             Ok(nodes)
         }

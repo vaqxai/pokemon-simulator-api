@@ -5,6 +5,7 @@ use super::{
     AsDbString, DbHandle, DbRepr,
     get::DbGet,
     promise::{Promise, Promised},
+    sanitize,
 };
 
 /// Denotes the ability to link this type to another using database relationships
@@ -39,10 +40,10 @@ where
                 Self::DB_NODE_KIND,
                 T::DB_NODE_KIND,
                 Self::DB_IDENTIFIER_FIELD,
-                self.get_identifier(),
+                sanitize(&self.get_identifier()),
                 T::DB_IDENTIFIER_FIELD,
-                other.ident_db(),
-                relationship_type.as_db_string()
+                sanitize(&other.ident_db()),
+                sanitize(relationship_type.as_db_string())
             );
 
             debug!("Linking query: {}", query);
@@ -84,10 +85,10 @@ where
                         Self::DB_NODE_KIND,
                         T::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        self.get_identifier(),
+                        sanitize(&self.get_identifier()),
                         T::DB_IDENTIFIER_FIELD,
-                        other.ident_db(),
-                        relationship_type.as_db_string()
+                        sanitize(&other.ident_db()),
+                        sanitize(relationship_type.as_db_string())
                     )
                     .into(),
                 )
@@ -119,10 +120,10 @@ where
                         Self::DB_NODE_KIND,
                         T::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        self.get_identifier(),
+                        sanitize(&self.get_identifier()),
                         T::DB_IDENTIFIER_FIELD,
-                        other.ident_db(),
-                        relationship_name
+                        sanitize(&other.ident_db()),
+                        sanitize(relationship_name)
                     )
                     .into(),
                 )
@@ -170,8 +171,8 @@ where
                         "MATCH (a:{} {{ {} : {} }})-[:{}]->(b:{}) RETURN b;",
                         Self::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        database_identifier,
-                        relationship_type.as_db_string(),
+                        sanitize(&database_identifier),
+                        sanitize(relationship_type.as_db_string()),
                         T::DB_NODE_KIND
                     )
                     .into(),

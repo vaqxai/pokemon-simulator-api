@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use super::{DbHandle, DbRepr};
+use super::{DbHandle, DbRepr, sanitize};
 
 /// Denotes an ability to delete a node from the database
 pub trait DbDelete: DbRepr {
@@ -18,7 +18,7 @@ pub trait DbDelete: DbRepr {
                         "MATCH (n:{}) WHERE n.{} = {} DELETE n;",
                         Self::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        database_identifier
+                        sanitize(database_identifier)
                     )
                     .into(),
                 )

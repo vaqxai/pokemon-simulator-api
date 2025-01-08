@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use super::{DbHandle, DbRepr};
+use super::{DbHandle, DbRepr, sanitize};
 
 /// Denotes an ability to update a node in the database
 pub trait DbUpdate: DbRepr {
@@ -30,7 +30,7 @@ pub trait DbUpdate: DbRepr {
                         "MATCH (n:{}) WHERE n.{} = {} SET {}",
                         Self::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        database_identifier,
+                        sanitize(database_identifier),
                         update_args
                     )
                     .into(),
