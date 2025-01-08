@@ -2,11 +2,22 @@ use anyhow::Result;
 use neo4rs::Graph;
 use std::fs;
 
+/// The delete module contains traits to allow a type to be deleted from database
 pub mod delete;
+
+/// The get module contains traits to allow a type to be retrieved from the database
 pub mod get;
+
+/// The link module contains traits to allow a type to be linked to another type in the database
 pub mod link;
+
+/// The promise module contains traits to allow a type to be promised to be available from database
 pub mod promise;
+
+/// The put module contains traits to allow a type to be inserted into the database
 pub mod put;
+
+/// The update module contains traits to allow a type to be updated in the database
 pub mod update;
 
 /// Represents a handle to the database connection

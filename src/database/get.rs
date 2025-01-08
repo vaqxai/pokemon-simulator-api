@@ -89,11 +89,14 @@ pub trait DbGet: DbRepr {
         }
     }
 
-    async fn from_db_identifier(ident: String) -> Result<Self>
+    /// Get a node of this type from the database by its identifier
+    fn from_db_identifier(ident: String) -> impl Future<Output = Result<Self>>
     where
         Self: Sized,
     {
-        let node = get_db_node(Self::DB_IDENTIFIER_FIELD, Self::DB_NODE_KIND, &ident).await?;
-        Self::from_db_node(node).await
+        async move {
+            let node = get_db_node(Self::DB_IDENTIFIER_FIELD, Self::DB_NODE_KIND, &ident).await?;
+            Self::from_db_node(node).await
+        }
     }
 }
