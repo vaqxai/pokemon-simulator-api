@@ -51,7 +51,7 @@ impl DbRepr for PokemonType {
     const DB_IDENTIFIER_FIELD: &'static str = "name";
 
     fn get_identifier(&self) -> String {
-        format!("'{}'", self.name)
+        format!("'{}'", sanitize(&self.name))
     }
 }
 

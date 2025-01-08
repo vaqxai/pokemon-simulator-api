@@ -171,8 +171,8 @@ where
                         "MATCH (a:{} {{ {} : {} }})-[:{}]->(b:{}) RETURN b;",
                         Self::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        sanitize(&database_identifier),
-                        sanitize(relationship_type.as_db_string()),
+                        &database_identifier,
+                        relationship_type.as_db_string(),
                         T::DB_NODE_KIND
                     )
                     .into(),

@@ -49,7 +49,7 @@ impl DbRepr for Pokemon {
     const DB_IDENTIFIER_FIELD: &'static str = "name";
 
     fn get_identifier(&self) -> String {
-        format!("'{}'", self.name)
+        format!("'{}'", sanitize(&self.name))
     }
 }
 
@@ -163,7 +163,7 @@ impl DbGet for Pokemon {
 
             let primary_type = Self::get_linked_by_id(
                 &Relationship::PrimaryType,
-                format!("'{}'", identifier.clone()),
+                format!("'{}'", sanitize(&identifier)),
             )
             .await?
             .into_iter()
@@ -171,7 +171,7 @@ impl DbGet for Pokemon {
             .ok_or(anyhow::anyhow!("No primary type found for Pokemon"))?;
             let secondary_type = Self::get_linked_by_id(
                 &Relationship::SecondaryType,
-                format!("'{}'", identifier.clone()),
+                format!("'{}'", sanitize(&identifier)),
             )
             .await?
             .into_iter()

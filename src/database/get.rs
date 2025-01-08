@@ -11,7 +11,7 @@ async fn get_db_node(id_name: &str, kind: &str, database_identifier: &str) -> Re
 
     // if the identifier is not a number, put it in quotes
     if database_identifier.parse::<u64>().is_err() {
-        database_identifier = format!("'{}'", database_identifier);
+        database_identifier = format!("'{}'", sanitize(&database_identifier));
     }
 
     let mut q_out = db
@@ -21,7 +21,7 @@ async fn get_db_node(id_name: &str, kind: &str, database_identifier: &str) -> Re
                 "MATCH (n:{}) WHERE n.{} = {} RETURN n;",
                 sanitize(kind),
                 sanitize(id_name),
-                sanitize(&database_identifier)
+                &database_identifier
             )
             .into(),
         )

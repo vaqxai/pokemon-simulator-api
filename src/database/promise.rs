@@ -2,6 +2,8 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
+use crate::database::sanitize;
+
 use super::{DbRepr, get::DbGet};
 
 /// Represents a promise to resolve a node in the database
@@ -30,7 +32,7 @@ impl<T: DbRepr + Promised> Promise<T> {
         let ident = self.ident();
         // if the identifier is not a number, put it in quotes
         if ident.parse::<u64>().is_err() {
-            format!("'{}'", ident)
+            format!("'{}'", sanitize(ident))
         } else {
             ident.to_string()
         }

@@ -30,7 +30,7 @@ pub trait DbUpdate: DbRepr {
                         "MATCH (n:{}) WHERE n.{} = {} SET {}",
                         Self::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        sanitize(database_identifier),
+                        database_identifier,
                         update_args
                     )
                     .into(),

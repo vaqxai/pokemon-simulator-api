@@ -18,7 +18,7 @@ pub trait DbDelete: DbRepr {
                         "MATCH (n:{}) WHERE n.{} = {} DELETE n;",
                         Self::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        sanitize(database_identifier)
+                        database_identifier
                     )
                     .into(),
                 )
