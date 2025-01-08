@@ -10,7 +10,12 @@ use serde::{Deserialize, Serialize};
 use stats::PokemonStats;
 
 use crate::database::{
-    AsDbString, DbRepr, delete::DbDelete, get::DbGet, link::DbLink, promise::Promise, put::DbPut,
+    AsDbString, DbRepr,
+    delete::DbDelete,
+    get::DbGet,
+    link::DbLink,
+    promise::{Promise, Promised},
+    put::DbPut,
 };
 
 use anyhow::Result;
@@ -60,6 +65,31 @@ impl DbPut for Pokemon {
 impl DbDelete for Pokemon {}
 
 impl Pokemon {
+    /// Puts the Pokemon in the database with its types
+    pub async fn put_with_relationships(&mut self) -> Result<()> {
+        self.put_self_only().await?;
+
+        let prim_type = &self.primary_type.clone();
+        let sec_type = self.secondary_type.clone();
+
+        self.link_to(prim_type, &Relationship::PrimaryType).await?;
+        if let Some(secondary_type) = &sec_type {
+            self.link_to(secondary_type, &Relationship::SecondaryType)
+                .await?;
+        }
+        Ok(())
+    }
+
+    /// Returns the primary type of the Pokemon
+    pub fn primary_type(&self) -> &Promise<PokemonType> {
+        &self.primary_type
+    }
+
+    /// Returns the secondary type of the Pokemon if it has one
+    pub fn secondary_type(&self) -> Option<&Promise<PokemonType>> {
+        self.secondary_type.as_ref()
+    }
+
     /// Creates a new pokemon, places it in the database
     /// Does nothing on duplicate
     /// and links its types to the database
@@ -77,7 +107,7 @@ impl Pokemon {
         };
 
         // put the pokemon in the db
-        new.put_self().await?;
+        new.put_self_only().await?;
 
         // link types to db
         new.link_to(&new.primary_type.clone(), &Relationship::PrimaryType)
@@ -215,3 +245,5 @@ impl DbLink<PokemonType> for Pokemon {
         }
     }
 }
+
+impl Promised for Pokemon {}

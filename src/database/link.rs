@@ -34,22 +34,20 @@ where
         async move {
             let db = DbHandle::connect().await?;
 
-            let mut q_res = db
-                .inner
-                .execute(
-                    format!(
-                        "MATCH (a:{}), (b:{}) WHERE a.{} = {} AND b.{} = {} MERGE (a)-[:{}]->(b);",
-                        Self::DB_NODE_KIND,
-                        T::DB_NODE_KIND,
-                        Self::DB_IDENTIFIER_FIELD,
-                        self.get_identifier(),
-                        T::DB_IDENTIFIER_FIELD,
-                        other.ident(),
-                        relationship_type.as_db_string()
-                    )
-                    .into(),
-                )
-                .await?;
+            let query = format!(
+                "MATCH (a:{}), (b:{}) WHERE a.{} = {} AND b.{} = {} MERGE (a)-[:{}]->(b);",
+                Self::DB_NODE_KIND,
+                T::DB_NODE_KIND,
+                Self::DB_IDENTIFIER_FIELD,
+                self.get_identifier(),
+                T::DB_IDENTIFIER_FIELD,
+                other.ident_db(),
+                relationship_type.as_db_string()
+            );
+
+            debug!("Linking query: {}", query);
+
+            let mut q_res = db.inner.execute(query.into()).await?;
 
             let _none = q_res.next().await?;
 
@@ -88,7 +86,7 @@ where
                         Self::DB_IDENTIFIER_FIELD,
                         self.get_identifier(),
                         T::DB_IDENTIFIER_FIELD,
-                        other.ident(),
+                        other.ident_db(),
                         relationship_type.as_db_string()
                     )
                     .into(),
@@ -123,7 +121,7 @@ where
                         Self::DB_IDENTIFIER_FIELD,
                         self.get_identifier(),
                         T::DB_IDENTIFIER_FIELD,
-                        other.ident(),
+                        other.ident_db(),
                         relationship_name
                     )
                     .into(),

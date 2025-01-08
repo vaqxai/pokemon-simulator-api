@@ -38,6 +38,7 @@ use database::get::DbGet;
 use json::JsonStatus;
 use log::info;
 use pokemon::Pokemon;
+use rocket::serde::json::Json;
 use rocket_cors::{AllowedMethods, AllowedOrigins, CorsOptions};
 
 #[macro_use]
@@ -69,11 +70,12 @@ fn make_cors() -> CorsOptions {
 #[launch]
 #[tokio::main]
 async fn rocket() -> _ {
+    env_logger::init();
     let cors = make_cors().to_cors().expect("Error creating CORS fairing");
 
     rocket::build()
         .attach(cors)
-        .mount("/api", routes![index, get_pokemons])
+        .mount("/api", routes![index, get_pokemons, add_pokemon])
 }
 
 /// Health check endpoint that returns an OK status.
@@ -100,4 +102,17 @@ pub async fn get_pokemons<'a>() -> JsonResult<'a> {
     info!("Request to /api/pokemons");
     let pokemons = Pokemon::get_all().await.map_err(JsonStatus::from_anyhow)?;
     Ok(JsonStatus::data_owned(pokemons))
+}
+
+/// Endpoint to add a pokemon
+#[post("/pokemons", data = "<pokemon>")]
+pub async fn add_pokemon<'a>(pokemon: Json<Pokemon>) -> JsonResult<'a> {
+    info!("Request to /api/pokemons");
+    let mut pokemon = pokemon.into_inner();
+    pokemon
+        .put_with_relationships()
+        .await
+        .map_err(JsonStatus::from_anyhow)?;
+
+    Ok(JsonStatus::new_empty(json::Status::Ok))
 }

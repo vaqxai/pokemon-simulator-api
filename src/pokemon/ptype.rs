@@ -39,7 +39,7 @@ impl PokemonType {
             weak_against: vec![],
         };
 
-        new.put_self().await?;
+        new.put_self_only().await?;
 
         Ok(new)
     }
@@ -153,16 +153,4 @@ impl DbUpdate for PokemonType {
 
 impl DbDelete for PokemonType {}
 
-impl Promised for PokemonType {
-    async fn resolve(promise: Promise<Self>) -> Result<Self> {
-        let ident = promise.ident();
-        Self::from_db_identifier(ident).await
-    }
-
-    fn promise_from_node(node: neo4rs::Node) -> Promise<Self>
-    where
-        Self: Sized,
-    {
-        Promise::from_ident(node.get("name").unwrap())
-    }
-}
+impl Promised for PokemonType {}

@@ -138,7 +138,7 @@ async fn test_db_put() {
 
     println!("Generated struct: {:?}", status);
 
-    status.put_self().await.unwrap();
+    status.put_self_only().await.unwrap();
 
     println!("Put self completed");
 
@@ -222,7 +222,7 @@ async fn test_db_delete() {
 
     let identifier = status.id.to_string();
 
-    status.put_self().await.unwrap();
+    status.put_self_only().await.unwrap();
 
     Status::delete(&identifier).await.unwrap();
 
@@ -286,7 +286,7 @@ async fn test_db_update() {
 
     let identifier = status.id.to_string();
 
-    status.put_self().await.unwrap();
+    status.put_self_only().await.unwrap();
 
     let mut status = Status::get_first(&identifier).await.unwrap();
 

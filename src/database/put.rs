@@ -10,7 +10,8 @@ pub trait DbPut: DbRepr {
 
     /// Inserts a new node into the database, holding the contents 'self'
     /// Does not duplicate nodes
-    fn put_self(&self) -> impl std::future::Future<Output = Result<()>> + Send
+    /// WARNING: DOES NOT HANDLE RELATIONSHIPS
+    fn put_self_only(&self) -> impl std::future::Future<Output = Result<()>> + Send
     where
         Self: Sized,
     {
