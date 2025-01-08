@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use super::{DbHandle, DbRepr, sanitize};
+use super::{DbHandle, DbRepr};
 
 /// Denotes an ability to update a node in the database
 pub trait DbUpdate: DbRepr {

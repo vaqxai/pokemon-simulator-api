@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use super::{DbHandle, DbRepr, sanitize};
+use super::{DbHandle, DbRepr};
 
 /// Denotes an ability to delete a node from the database
 pub trait DbDelete: DbRepr {

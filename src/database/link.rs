@@ -5,7 +5,6 @@ use super::{
     AsDbString, DbHandle, DbRepr,
     get::DbGet,
     promise::{Promise, Promised},
-    sanitize,
 };
 
 /// Denotes the ability to link this type to another using database relationships
