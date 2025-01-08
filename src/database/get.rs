@@ -19,9 +19,7 @@ async fn get_db_node(id_name: &str, kind: &str, database_identifier: &str) -> Re
         .execute(
             format!(
                 "MATCH (n:{}) WHERE n.{} = {} RETURN n;",
-                sanitize(kind),
-                sanitize(id_name),
-                &database_identifier
+                kind, id_name, &database_identifier
             )
             .into(),
         )

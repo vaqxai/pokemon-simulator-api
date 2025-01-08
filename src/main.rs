@@ -108,6 +108,15 @@ pub async fn get_pokemons<'a>() -> JsonResult<'a> {
 #[post("/pokemons", data = "<pokemon>")]
 pub async fn add_pokemon<'a>(pokemon: Json<Pokemon>) -> JsonResult<'a> {
     info!("Request to /api/pokemons");
+
+    if pokemon.name.len() > 30 {
+        return Err(JsonStatus::error("Name is too long"));
+    }
+
+    if pokemon.name.is_empty() {
+        return Err(JsonStatus::error("Name cannot be empty"));
+    }
+
     let mut pokemon = pokemon.into_inner();
     pokemon
         .put_with_relationships()

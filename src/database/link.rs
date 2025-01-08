@@ -40,10 +40,10 @@ where
                 Self::DB_NODE_KIND,
                 T::DB_NODE_KIND,
                 Self::DB_IDENTIFIER_FIELD,
-                sanitize(&self.get_identifier()),
+                &self.get_identifier(),
                 T::DB_IDENTIFIER_FIELD,
-                sanitize(&other.ident_db()),
-                sanitize(relationship_type.as_db_string())
+                &other.ident_db(),
+                relationship_type.as_db_string()
             );
 
             debug!("Linking query: {}", query);
@@ -85,10 +85,10 @@ where
                         Self::DB_NODE_KIND,
                         T::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        sanitize(&self.get_identifier()),
+                        &self.get_identifier(),
                         T::DB_IDENTIFIER_FIELD,
-                        sanitize(&other.ident_db()),
-                        sanitize(relationship_type.as_db_string())
+                        &other.ident_db(),
+                        relationship_type.as_db_string()
                     )
                     .into(),
                 )
@@ -120,10 +120,10 @@ where
                         Self::DB_NODE_KIND,
                         T::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        sanitize(&self.get_identifier()),
+                        &self.get_identifier(),
                         T::DB_IDENTIFIER_FIELD,
-                        sanitize(&other.ident_db()),
-                        sanitize(relationship_name)
+                        &other.ident_db(),
+                        relationship_name
                     )
                     .into(),
                 )
