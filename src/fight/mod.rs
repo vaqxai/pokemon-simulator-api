@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::pokemon::Pokemon;
 
+/// HTTP Enpoints for simulating pokemon fights
+pub mod endpoints;
+
 /// Represents a fight event that can occur during a Pokemon battle
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "event_name", content = "event_data")]

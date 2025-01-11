@@ -82,6 +82,7 @@ async fn rocket() -> _ {
         trainer::endpoints::get_trainer_pokemons,
         trainer::endpoints::add_pokemon_to_trainer,
         trainer::endpoints::remove_pokemon_from_trainer,
+        fight::endpoints::simulate_fight,
     ])
 }
 
