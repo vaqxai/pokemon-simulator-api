@@ -4,6 +4,9 @@ pub mod ptype;
 /// Pokemon Stats (hp, etc) module
 pub mod stats;
 
+/// Pokemon http endpoints module
+pub mod endpoints;
+
 use std::pin::Pin;
 
 use serde::{Deserialize, Serialize};

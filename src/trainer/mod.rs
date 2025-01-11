@@ -1,9 +1,15 @@
+/// Trainer HTTP endpoints module
+pub mod endpoints;
+
 use serde::{Deserialize, Serialize};
 
 use anyhow::Result;
 
 use crate::{
-    database::{AsDbString, DbRepr, link::DbLink, promise::Promise, put::DbPut, sanitize},
+    database::{
+        AsDbString, DbRepr, delete::DbDelete, get::DbGet, link::DbLink, promise::Promise,
+        put::DbPut, sanitize,
+    },
     pokemon::Pokemon,
 };
 
@@ -74,3 +80,29 @@ impl DbLink<Pokemon> for Trainer {
         }
     }
 }
+
+impl DbGet for Trainer {
+    fn from_db_node(node: neo4rs::Node) -> Self::Future
+    where
+        Self: Sized,
+    {
+        Box::pin(async move {
+            let name = node.get::<String>("name")?;
+
+            let team =
+                Trainer::get_linked_by_id(&Relationship::Owns, format!("'{}'", sanitize(&name)))
+                    .await?;
+
+            Ok(Trainer { name, team })
+        })
+    }
+
+    fn identifier_from_node(node: neo4rs::Node) -> String
+    where
+        Self: Sized,
+    {
+        node.get::<String>("name").unwrap()
+    }
+}
+
+impl DbDelete for Trainer {}
