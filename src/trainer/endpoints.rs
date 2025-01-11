@@ -1,5 +1,11 @@
 use crate::{
-    database::{delete::DbDelete, get::DbGet, link::DbLink, promise::Promised, put::DbPut},
+    database::{
+        delete::DbDelete,
+        get::DbGet,
+        link::DbLink,
+        promise::{MaybePromise, Promised},
+        put::DbPut,
+    },
     json::{self, JsonResult, JsonStatus},
     pokemon::Pokemon,
     trainer::{self, Trainer},
@@ -105,7 +111,10 @@ pub async fn add_pokemon_to_trainer<'a>(
     }
 
     trainer
-        .link_to(&pokemon.as_promise(), &trainer::Relationship::Owns)
+        .link_to(
+            &MaybePromise::from_promise(pokemon.as_promise()),
+            &trainer::Relationship::Owns,
+        )
         .await
         .map_err(JsonStatus::from_anyhow)?;
 

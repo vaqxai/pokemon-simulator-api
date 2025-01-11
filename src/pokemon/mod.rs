@@ -17,7 +17,7 @@ use crate::database::{
     delete::DbDelete,
     get::DbGet,
     link::DbLink,
-    promise::{Promise, Promised},
+    promise::{MaybePromise, Promised},
     put::DbPut,
     sanitize,
 };
@@ -36,13 +36,13 @@ pub struct Pokemon {
     /// This field is not public because it should be set by database link
     /// operations only
     /// Use the new fn to construct a Pokemon with types
-    primary_type: Promise<PokemonType>,
+    primary_type: MaybePromise<PokemonType>,
 
     /// The secondary type of the Pokemon
     /// This field is not public because it should be set by database link
     /// operations only
     /// Use the new fn to construct a Pokemon with types
-    secondary_type: Option<Promise<PokemonType>>,
+    secondary_type: Option<MaybePromise<PokemonType>>,
     /// The base stats of the Pokemon
     pub stats: PokemonStats,
 }
@@ -51,17 +51,18 @@ impl PartialEq for Pokemon {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
-    fn ne(&self, other: &Self) -> bool {
-        self.name != other.name
-    }
 }
 
 impl DbRepr for Pokemon {
     const DB_NODE_KIND: &'static str = "Pokemon";
     const DB_IDENTIFIER_FIELD: &'static str = "name";
 
-    fn get_identifier(&self) -> String {
+    fn get_db_identifier(&self) -> String {
         format!("'{}'", sanitize(&self.name))
+    }
+
+    fn get_raw_identifier(&self) -> &str {
+        &self.name
     }
 }
 
@@ -98,12 +99,12 @@ impl Pokemon {
     }
 
     /// Returns the primary type of the Pokemon
-    pub fn primary_type(&self) -> &Promise<PokemonType> {
+    pub fn primary_type(&self) -> &MaybePromise<PokemonType> {
         &self.primary_type
     }
 
     /// Returns the secondary type of the Pokemon if it has one
-    pub fn secondary_type(&self) -> Option<&Promise<PokemonType>> {
+    pub fn secondary_type(&self) -> Option<&MaybePromise<PokemonType>> {
         self.secondary_type.as_ref()
     }
 
@@ -112,8 +113,8 @@ impl Pokemon {
     /// and links its types to the database
     pub async fn new_to_db(
         name: String,
-        primary_type: Promise<PokemonType>,
-        secondary_type: Option<Promise<PokemonType>>,
+        primary_type: MaybePromise<PokemonType>,
+        secondary_type: Option<MaybePromise<PokemonType>>,
         stats: PokemonStats,
     ) -> Result<Self> {
         let mut new = Self {
@@ -141,7 +142,7 @@ impl Pokemon {
     /// This is possible because the secondary type is an Option
     pub async fn set_secondary_type(
         &mut self,
-        new_secondary_type: Option<Promise<PokemonType>>,
+        new_secondary_type: Option<MaybePromise<PokemonType>>,
     ) -> Result<()> {
         if self.secondary_type.is_some() {
             self.unlink_from(
@@ -230,7 +231,7 @@ impl DbLink<PokemonType> for Pokemon {
 
     fn link_side_effect(
         &mut self,
-        other: &Promise<PokemonType>,
+        other: &MaybePromise<PokemonType>,
         relationship_type: &Self::RelationshipType,
     ) -> Result<()> {
         match relationship_type {
@@ -247,7 +248,7 @@ impl DbLink<PokemonType> for Pokemon {
 
     fn unlink_side_effect(
         &mut self,
-        _other: &Promise<PokemonType>,
+        _other: &MaybePromise<PokemonType>,
         relationship_type: &Self::RelationshipType,
     ) -> Result<()> {
         match *relationship_type {

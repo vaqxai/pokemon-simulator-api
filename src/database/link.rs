@@ -4,7 +4,7 @@ use neo4rs::Node;
 use super::{
     AsDbString, DbHandle, DbRepr,
     get::DbGet,
-    promise::{Promise, Promised},
+    promise::{MaybePromise, Promised},
 };
 
 /// Denotes the ability to link this type to another using database relationships
@@ -21,14 +21,14 @@ where
     /// this is mandatory to help remember to update local fields
     fn link_side_effect(
         &mut self,
-        other: &Promise<T>,
+        other: &MaybePromise<T>,
         relationship_type: &Self::RelationshipType,
     ) -> Result<()>;
 
     /// Adds a new link (does nothing if the link already exists) from 'self' to 'other'
     fn link_to(
         &mut self,
-        other: &Promise<T>,
+        other: &MaybePromise<T>,
         relationship_type: &Self::RelationshipType,
     ) -> impl Future<Output = Result<()>> {
         async move {
@@ -39,7 +39,7 @@ where
                 Self::DB_NODE_KIND,
                 T::DB_NODE_KIND,
                 Self::DB_IDENTIFIER_FIELD,
-                &self.get_identifier(),
+                &self.get_db_identifier(),
                 T::DB_IDENTIFIER_FIELD,
                 &other.ident_db(),
                 relationship_type.as_db_string()
@@ -63,14 +63,14 @@ where
     /// this is mandatory to help remember to update local fields
     fn unlink_side_effect(
         &mut self,
-        other: &Promise<T>,
+        other: &MaybePromise<T>,
         relationship_type: &Self::RelationshipType,
     ) -> Result<()>;
 
     /// Removes a link from 'self' to 'other' with the given relationship name
     fn unlink_from(
         &mut self,
-        other: &Promise<T>,
+        other: &MaybePromise<T>,
         relationship_type: &Self::RelationshipType,
     ) -> impl Future<Output = Result<()>> {
         async move {
@@ -84,7 +84,7 @@ where
                         Self::DB_NODE_KIND,
                         T::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        &self.get_identifier(),
+                        &self.get_db_identifier(),
                         T::DB_IDENTIFIER_FIELD,
                         &other.ident_db(),
                         relationship_type.as_db_string()
@@ -105,7 +105,7 @@ where
     /// Checks whether a link exists from 'self' to 'other' with the given relationship name
     fn is_linked_by(
         &self,
-        other: &Promise<T>,
+        other: &MaybePromise<T>,
         relationship_name: &str,
     ) -> impl Future<Output = Result<bool>> {
         async move {
@@ -119,7 +119,7 @@ where
                         Self::DB_NODE_KIND,
                         T::DB_NODE_KIND,
                         Self::DB_IDENTIFIER_FIELD,
-                        &self.get_identifier(),
+                        &self.get_db_identifier(),
                         T::DB_IDENTIFIER_FIELD,
                         &other.ident_db(),
                         relationship_name
@@ -159,7 +159,7 @@ where
     fn get_linked_by_id(
         relationship_type: &Self::RelationshipType,
         database_identifier: String,
-    ) -> impl Future<Output = Result<Vec<Promise<T>>>> {
+    ) -> impl Future<Output = Result<Vec<MaybePromise<T>>>> {
         async move {
             let db = DbHandle::connect().await?;
 
@@ -182,7 +182,7 @@ where
 
             while let Some(row) = q_res.next().await? {
                 let node = row.get::<Node>("b")?;
-                nodes.push(T::promise_from_node(node));
+                nodes.push(MaybePromise::from_promise(T::promise_from_node(node)));
             }
 
             Ok(nodes)
@@ -194,7 +194,7 @@ where
     fn get_linked_to(
         &self,
         relationship_type: &Self::RelationshipType,
-    ) -> impl Future<Output = Result<Vec<Promise<T>>>> {
-        Self::get_linked_by_id(relationship_type, self.get_identifier())
+    ) -> impl Future<Output = Result<Vec<MaybePromise<T>>>> {
+        Self::get_linked_by_id(relationship_type, self.get_db_identifier())
     }
 }

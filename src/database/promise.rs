@@ -29,6 +29,47 @@ pub enum MaybePromise<T: Promised + DbRepr> {
     Concrete(T),
 }
 
+impl<T: DbRepr + Promised> MaybePromise<T> {
+    /// Returns the promise's ident or the concrete type's identifier
+    pub fn ident(&self) -> &str {
+        match self {
+            MaybePromise::Promise(p) => p.ident(),
+            MaybePromise::Concrete(c) => c.get_raw_identifier(),
+        }
+    }
+
+    /// Resolves the promise to a concrete type or returns the concrete type
+    pub async fn resolve(self) -> Result<T> {
+        match self {
+            MaybePromise::Promise(p) => p.resolve().await,
+            MaybePromise::Concrete(c) => Ok(c),
+        }
+    }
+
+    /// Returns the promise's database-compatible identifier or the concrete type's db identifier
+    pub fn ident_db(&self) -> String {
+        match self {
+            MaybePromise::Promise(p) => p.ident_db(),
+            MaybePromise::Concrete(c) => c.get_db_identifier(),
+        }
+    }
+
+    /// Create a promise using a database identifier
+    pub fn from_ident_unchecked(ident: String) -> Self {
+        MaybePromise::Promise(Promise::from_ident_unchecked(ident))
+    }
+
+    /// Create a maybepromise holding a concrete type
+    pub fn from_concrete(concrete: T) -> Self {
+        MaybePromise::Concrete(concrete)
+    }
+
+    /// Create a maybepromise holding a promise
+    pub fn from_promise(promise: Promise<T>) -> Self {
+        MaybePromise::Promise(promise)
+    }
+}
+
 impl<T: DbRepr + Promised> Promise<T> {
     /// Get the identifier used to make this promise,
     /// this is a valid database identifier (such as an ID)
@@ -96,6 +137,6 @@ pub trait Promised: DbRepr + DbGet {
     where
         Self: Sized,
     {
-        Promise::from_ident_unchecked(self.get_identifier())
+        Promise::from_ident_unchecked(self.get_db_identifier())
     }
 }

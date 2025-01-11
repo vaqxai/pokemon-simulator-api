@@ -7,7 +7,7 @@ use anyhow::Result;
 
 use crate::{
     database::{
-        AsDbString, DbRepr, delete::DbDelete, get::DbGet, link::DbLink, promise::Promise,
+        AsDbString, DbRepr, delete::DbDelete, get::DbGet, link::DbLink, promise::MaybePromise,
         put::DbPut, sanitize,
     },
     pokemon::Pokemon,
@@ -19,15 +19,19 @@ pub struct Trainer {
     /// The name of the trainer
     pub name: String,
     /// The team of Pokemon owned by the trainer
-    pub team: Vec<Promise<Pokemon>>,
+    pub team: Vec<MaybePromise<Pokemon>>,
 }
 
 impl DbRepr for Trainer {
     const DB_IDENTIFIER_FIELD: &'static str = "name";
     const DB_NODE_KIND: &'static str = "Trainer";
 
-    fn get_identifier(&self) -> String {
-        self.name.clone()
+    fn get_raw_identifier(&self) -> &str {
+        &self.name
+    }
+
+    fn get_db_identifier(&self) -> String {
+        format!("'{}'", sanitize(&self.name))
     }
 }
 
@@ -56,7 +60,7 @@ impl DbLink<Pokemon> for Trainer {
 
     fn link_side_effect(
         &mut self,
-        pokemon: &Promise<Pokemon>,
+        pokemon: &MaybePromise<Pokemon>,
         relationship: &Self::RelationshipType,
     ) -> Result<()> {
         match relationship {
@@ -69,7 +73,7 @@ impl DbLink<Pokemon> for Trainer {
 
     fn unlink_side_effect(
         &mut self,
-        pokemon: &Promise<Pokemon>,
+        pokemon: &MaybePromise<Pokemon>,
         relationship: &Self::RelationshipType,
     ) -> Result<()> {
         match relationship {

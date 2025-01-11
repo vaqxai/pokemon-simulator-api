@@ -74,7 +74,10 @@ pub trait DbRepr {
 
     /// Get the identifier of the database node
     /// In a database friendly format (strings in single quotes)
-    fn get_identifier(&self) -> String;
+    fn get_db_identifier(&self) -> String;
+
+    /// Get the identifier of the database node
+    fn get_raw_identifier(&self) -> &str;
 }
 
 /// Sanitize a string for use in a cypher query

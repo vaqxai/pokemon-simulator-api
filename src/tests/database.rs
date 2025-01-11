@@ -39,15 +39,19 @@ async fn test_db_get() {
     use neo4rs::Node;
 
     struct Status {
-        id: i32,
+        id: String,
         status: String,
     }
 
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
 
-        fn get_identifier(&self) -> String {
+        fn get_db_identifier(&self) -> String {
             self.id.to_string()
+        }
+
+        fn get_raw_identifier(&self) -> &str {
+            &self.id
         }
     }
 
@@ -69,7 +73,7 @@ async fn test_db_get() {
 
     let status = Status::get_first("1").await.unwrap();
 
-    assert_eq!(status.id, 1);
+    assert_eq!(status.id, "1");
     assert_eq!(status.status, "ok");
 }
 
@@ -82,8 +86,12 @@ async fn test_db_repr() {
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
 
-        fn get_identifier(&self) -> String {
+        fn get_db_identifier(&self) -> String {
             "1".to_string()
+        }
+
+        fn get_raw_identifier(&self) -> &str {
+            "1"
         }
     }
 
@@ -97,15 +105,19 @@ async fn test_db_put() {
 
     #[derive(Debug)]
     struct Status {
-        id: u32,
+        id: String,
         status: String,
     }
 
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
 
-        fn get_identifier(&self) -> String {
+        fn get_db_identifier(&self) -> String {
             self.id.to_string()
+        }
+
+        fn get_raw_identifier(&self) -> &str {
+            &self.id
         }
     }
 
@@ -132,7 +144,7 @@ async fn test_db_put() {
     }
 
     let status = Status {
-        id: u32::MAX,
+        id: u32::MAX.to_string(),
         status: "ok".to_string(),
     };
 
@@ -145,7 +157,7 @@ async fn test_db_put() {
     // assert this is now in the database
     let status = Status::get_first(&u32::MAX.to_string()).await.unwrap();
 
-    assert_eq!(status.id, u32::MAX);
+    assert_eq!(status.id, u32::MAX.to_string());
     assert_eq!(status.status, "ok");
 
     // delete status from db
@@ -179,7 +191,7 @@ async fn test_db_delete() {
     use neo4rs::Node;
 
     struct Status {
-        id: u32,
+        id: String,
         status: String,
     }
 
@@ -192,8 +204,12 @@ async fn test_db_delete() {
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
 
-        fn get_identifier(&self) -> String {
+        fn get_db_identifier(&self) -> String {
             self.id.to_string()
+        }
+
+        fn get_raw_identifier(&self) -> &str {
+            &self.id
         }
     }
 
@@ -216,7 +232,7 @@ async fn test_db_delete() {
     }
 
     let status = Status {
-        id: u32::MAX - 1,
+        id: (u32::MAX - 1).to_string(),
         status: "ok".to_string(),
     };
 
@@ -237,7 +253,7 @@ async fn test_db_update() {
     use neo4rs::Node;
 
     struct Status {
-        id: u32,
+        id: String,
         status: String,
     }
 
@@ -250,8 +266,12 @@ async fn test_db_update() {
     impl DbRepr for Status {
         const DB_NODE_KIND: &'static str = "STATUS";
 
-        fn get_identifier(&self) -> String {
+        fn get_db_identifier(&self) -> String {
             self.id.to_string()
+        }
+
+        fn get_raw_identifier(&self) -> &str {
+            &self.id
         }
     }
 
@@ -280,7 +300,7 @@ async fn test_db_update() {
     impl DbDelete for Status {}
 
     let status = Status {
-        id: u32::MAX - 2,
+        id: (u32::MAX - 2).to_string(),
         status: "ok".to_string(),
     };
 

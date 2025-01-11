@@ -59,14 +59,14 @@ pub async fn process_fight(contender: &Pokemon, challenger: &Pokemon) -> Result<
     let mut contender_hp = contender.stats.hp;
     let mut challenger_hp = challenger.stats.hp;
 
-    let contender_primary_type = contender.primary_type().resolve().await?;
-    let contender_secondary_type = match contender.secondary_type().map(|t| t.resolve()) {
+    let contender_primary_type = contender.primary_type().clone().resolve().await?;
+    let contender_secondary_type = match contender.secondary_type().map(|t| t.clone().resolve()) {
         Some(t) => Some(t.await?),
         None => None,
     };
 
-    let challenger_primary_type = challenger.primary_type().resolve().await?;
-    let challenger_secondary_type = match challenger.secondary_type().map(|t| t.resolve()) {
+    let challenger_primary_type = challenger.primary_type().clone().resolve().await?;
+    let challenger_secondary_type = match challenger.secondary_type().map(|t| t.clone().resolve()) {
         Some(t) => Some(t.await?),
         None => None,
     };

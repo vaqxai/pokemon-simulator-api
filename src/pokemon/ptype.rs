@@ -7,7 +7,7 @@ use crate::database::{
     delete::DbDelete,
     get::DbGet,
     link::DbLink,
-    promise::{Promise, Promised},
+    promise::{MaybePromise, Promised},
     put::DbPut,
     sanitize,
     update::DbUpdate,
@@ -23,11 +23,11 @@ pub struct PokemonType {
 
     /// The types that this Pokemon type is strong against
     /// This field is not public because it should be set by database link
-    strong_against: Vec<Promise<PokemonType>>,
+    strong_against: Vec<MaybePromise<PokemonType>>,
 
     /// The types that this Pokemon type is weak against
     /// This field is not public because it should be set by database link
-    weak_against: Vec<Promise<PokemonType>>,
+    weak_against: Vec<MaybePromise<PokemonType>>,
 }
 
 impl PokemonType {
@@ -60,8 +60,12 @@ impl DbRepr for PokemonType {
     const DB_NODE_KIND: &'static str = "PokemonType";
     const DB_IDENTIFIER_FIELD: &'static str = "name";
 
-    fn get_identifier(&self) -> String {
+    fn get_db_identifier(&self) -> String {
         format!("'{}'", sanitize(&self.name))
+    }
+
+    fn get_raw_identifier(&self) -> &str {
+        &self.name
     }
 }
 
@@ -87,7 +91,7 @@ impl DbLink<PokemonType> for PokemonType {
 
     fn link_side_effect(
         &mut self,
-        other: &Promise<PokemonType>,
+        other: &MaybePromise<PokemonType>,
         relationship_type: &Self::RelationshipType,
     ) -> Result<()> {
         match relationship_type {
@@ -104,7 +108,7 @@ impl DbLink<PokemonType> for PokemonType {
 
     fn unlink_side_effect(
         &mut self,
-        other: &Promise<PokemonType>,
+        other: &MaybePromise<PokemonType>,
         relationship_type: &Self::RelationshipType,
     ) -> Result<()> {
         match relationship_type {
