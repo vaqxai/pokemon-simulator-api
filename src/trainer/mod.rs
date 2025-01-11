@@ -33,7 +33,7 @@ impl DbRepr for Trainer {
 
 impl DbPut for Trainer {
     fn put_args(&self) -> String {
-        format!("name: '{}'", sanitize(&self.name))
+        format!("{{name: '{}'}}", sanitize(&self.name))
     }
 }
 

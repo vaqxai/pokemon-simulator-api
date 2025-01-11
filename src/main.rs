@@ -77,6 +77,7 @@ async fn rocket() -> _ {
         index,
         pokemon::endpoints::get_pokemons,
         pokemon::endpoints::add_pokemon,
+        trainer::endpoints::get_trainers,
         trainer::endpoints::create_trainer,
         trainer::endpoints::delete_trainer,
         trainer::endpoints::get_trainer_pokemons,

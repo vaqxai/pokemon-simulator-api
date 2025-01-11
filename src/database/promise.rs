@@ -19,6 +19,16 @@ pub struct Promise<T: DbRepr + Promised> {
     _phantom: PhantomData<T>,
 }
 
+/// Represents a promise that may or may not be resolved
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(untagged)]
+pub enum MaybePromise<T: Promised + DbRepr> {
+    /// A promise
+    Promise(Promise<T>),
+    /// A concrete value
+    Concrete(T),
+}
+
 impl<T: DbRepr + Promised> Promise<T> {
     /// Get the identifier used to make this promise,
     /// this is a valid database identifier (such as an ID)

@@ -15,13 +15,12 @@ pub trait DbPut: DbRepr {
     where
         Self: Sized,
     {
-        let put_args = self.put_args();
+        debug!("PutSelfOnly: {}", self.put_args());
+        let query = format!("MERGE (n:{} {})", Self::DB_NODE_KIND, self.put_args());
+        debug!("PutSelfQuery: {query}");
         async move {
             let db = DbHandle::connect().await?;
-            let mut q_res = db
-                .inner
-                .execute(format!("MERGE (n:{} {})", Self::DB_NODE_KIND, put_args).into())
-                .await?;
+            let mut q_res = db.inner.execute(query.into()).await?;
             let _none = q_res.next().await?;
             Ok(())
         }
