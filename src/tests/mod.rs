@@ -3,7 +3,8 @@ mod json;
 
 mod database;
 
-mod pokemon;
+// TODO: Add mock database impl to test this on?
+// mod pokemon;
 
 /// Test if rocket can be built
 #[test]
