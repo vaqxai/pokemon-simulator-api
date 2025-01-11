@@ -24,10 +24,17 @@ pub async fn get_trainers<'a>() -> JsonResult<'a> {
 pub async fn get_trainer_pokemons<'a>(trainer_name: String) -> JsonResult<'a> {
     info!("Request to /api/trainer_pokemons/{}", trainer_name);
 
-    let trainer = match Trainer::get_first(&trainer_name).await {
+    let mut trainer = match Trainer::get_first(&trainer_name).await {
         Ok(trainer) => trainer,
         Err(_) => return Err(JsonStatus::error("Trainer not found")),
     };
+
+    // resolve the trainer's pokemons
+    for p in &mut trainer.team {
+        *p = MaybePromise::from_concrete(
+            p.clone().resolve().await.map_err(JsonStatus::from_anyhow)?,
+        );
+    }
 
     Ok(JsonStatus::data_owned(trainer.team))
 }
