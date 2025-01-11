@@ -27,7 +27,7 @@ pub async fn get_trainer_pokemons<'a>(trainer_name: String) -> JsonResult<'a> {
 }
 
 /// Endpoint for creating a new trainer.
-#[put("/trainer_pokemons/<trainer_name>")]
+#[post("/trainer_pokemons/<trainer_name>")]
 pub async fn create_trainer<'a>(trainer_name: String) -> JsonResult<'a> {
     info!("Request to /api/trainer_pokemons/{}", trainer_name);
 
@@ -78,7 +78,7 @@ pub async fn delete_trainer<'a>(trainer_name: String) -> JsonResult<'a> {
 }
 
 /// Endpoint for adding a Pokemon to a trainer's team.
-#[put("/trainer_pokemons/<trainer_name>/<pokemon_name>")]
+#[post("/trainer_pokemons/<trainer_name>/<pokemon_name>")]
 pub async fn add_pokemon_to_trainer<'a>(
     trainer_name: String,
     pokemon_name: String,
