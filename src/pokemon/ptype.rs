@@ -44,6 +44,16 @@ impl PokemonType {
 
         Ok(new)
     }
+
+    /// Checks if this Pokemon type is strong against another type
+    pub fn is_strong_against(&self, other: &PokemonType) -> bool {
+        self.strong_against.iter().any(|t| t.ident() == other.name)
+    }
+
+    /// Checks if this Pokemon type is weak against another type
+    pub fn is_weak_against(&self, other: &PokemonType) -> bool {
+        self.weak_against.iter().any(|t| t.ident() == other.name)
+    }
 }
 
 impl DbRepr for PokemonType {

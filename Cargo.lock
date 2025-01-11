@@ -1225,6 +1225,7 @@ dependencies = [
  "erased-serde",
  "log",
  "neo4rs",
+ "rand",
  "rocket",
  "rocket_cors",
  "serde",

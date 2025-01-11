@@ -46,12 +46,17 @@ impl<T: DbRepr + Promised> Promise<T> {
             _phantom: PhantomData,
         }
     }
+
+    /// Resolves &self to concrete type by cloning
+    pub fn resolve(&self) -> impl Future<Output = Result<T>> {
+        T::resolve(self)
+    }
 }
 
 /// Denotes that a type can be promised, i.e. resolved from a promise
 pub trait Promised: DbRepr + DbGet {
     /// Turn this promise into a full type (using a database request)
-    fn resolve(promise: Promise<Self>) -> impl Future<Output = Result<Self>>
+    fn resolve(promise: &Promise<Self>) -> impl Future<Output = Result<Self>>
     where
         Self: Sized,
     {

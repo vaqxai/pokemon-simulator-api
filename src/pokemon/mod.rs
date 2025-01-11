@@ -47,6 +47,15 @@ pub struct Pokemon {
     pub stats: PokemonStats,
 }
 
+impl PartialEq for Pokemon {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+    fn ne(&self, other: &Self) -> bool {
+        self.name != other.name
+    }
+}
+
 impl DbRepr for Pokemon {
     const DB_NODE_KIND: &'static str = "Pokemon";
     const DB_IDENTIFIER_FIELD: &'static str = "name";

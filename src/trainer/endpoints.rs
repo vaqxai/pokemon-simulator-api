@@ -5,6 +5,14 @@ use crate::{
     trainer::{self, Trainer},
 };
 
+/// Endpoint for getting a list of all trainers
+#[get("/trainers")]
+pub async fn get_trainers<'a>() -> JsonResult<'a> {
+    info!("Request to /api/trainers");
+    let trainers = Trainer::get_all().await.map_err(JsonStatus::from_anyhow)?;
+    Ok(JsonStatus::data_owned(trainers))
+}
+
 /// Endpoint for getting a list of all Pokemon owned by a trainer.
 #[get("/trainer_pokemons/<trainer_name>")]
 pub async fn get_trainer_pokemons<'a>(trainer_name: String) -> JsonResult<'a> {

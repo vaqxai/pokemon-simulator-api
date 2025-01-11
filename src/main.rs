@@ -31,6 +31,9 @@ pub mod trainer;
 /// Module defining basic database traits and operations
 pub mod database;
 
+/// Module containing fight simulation logic
+pub mod fight;
+
 #[doc(hidden)]
 mod tests;
 use crate::json::JsonResult;
