@@ -14,7 +14,7 @@ pub trait DbUpdate: DbRepr {
     fn update(
         &self,
         database_identifier: &str,
-    ) -> impl std::future::Future<Output = Result<()>> + Send
+    ) -> impl Future<Output = Result<()>> + Send
     where
         Self: Sized,
     {

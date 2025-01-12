@@ -28,24 +28,24 @@ async fn get_db_node(id_name: &str, kind: &str, database_identifier: &str) -> Re
     let row = q_out.next().await?.ok_or(anyhow::anyhow!("No rows"))?;
     // row should return one or more nodes
 
-    row.get::<neo4rs::Node>("n").map_err(|e| e.into())
+    row.get::<Node>("n").map_err(|e| e.into())
 }
 
 /// Denotes that a type can be retrieved from the database
 pub trait DbGet: DbRepr {
     /// The future type that resolves to the type
     type Future: Future<Output = Result<Self>> + Send
-        = Pin<Box<dyn std::future::Future<Output = Result<Self>> + Send>>
+        = Pin<Box<dyn Future<Output = Result<Self>> + Send>>
     where
         Self: Sized;
     /// this function should make a new instance of the type from a neo4j node
-    fn from_db_node(node: neo4rs::Node) -> Self::Future
+    fn from_db_node(node: Node) -> Self::Future
     where
         Self: Sized;
 
     /// this function should get the database identifier of the node from the node
     /// e.g. "id" field
-    fn identifier_from_node(node: neo4rs::Node) -> String
+    fn identifier_from_node(node: Node) -> String
     where
         Self: Sized;
 

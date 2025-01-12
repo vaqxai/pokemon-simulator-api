@@ -5,7 +5,7 @@ use super::{DbHandle, DbRepr};
 /// Denotes an ability to delete a node from the database
 pub trait DbDelete: DbRepr {
     /// Deletes the node from the database with the given identifier
-    fn delete(database_identifier: &str) -> impl std::future::Future<Output = Result<()>> + Send
+    fn delete(database_identifier: &str) -> impl Future<Output = Result<()>> + Send
     where
         Self: Sized,
     {

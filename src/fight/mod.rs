@@ -50,6 +50,7 @@ pub enum FightEvent {
     Winner {
         /// The name of the winning trainer
         trainer: String,
+        /// The names of the Pokemon left on the winning trainer's team
         pokemon_left: Vec<String>,
     },
 }

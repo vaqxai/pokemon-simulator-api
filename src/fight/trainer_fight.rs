@@ -99,7 +99,7 @@ pub async fn process_fight(
             }
             (Some(chal_poke), Some(cont_poke)) => {
                 // fight
-                let fight_log = super::pokemon_fight::process_fight_with_hp(
+                let mut fight_log = super::pokemon_fight::process_fight_with_hp(
                     &chal_poke,
                     &cont_poke,
                     challenger_hp,
@@ -112,11 +112,11 @@ pub async fn process_fight(
                 match pre_last_fight_event {
                     FightEvent::Fainted { pokemon} => {
                         // remove the fainted pokemon from the team
-                        if challenger_pokemon.as_ref().unwrap().ident() == pokemon.ident() {
-                            challenger_team.retain(|p| p.ident() != pokemon.ident());
+                        if challenger_pokemon.as_ref().unwrap().name == *pokemon {
+                            challenger_team.retain(|p| p.name != *pokemon);
                             challenger_pokemon = None;
-                        } else if contender_pokemon.as_ref().unwrap().ident() == pokemon.ident() {
-                            contender_team.retain(|p| p.ident() != pokemon.ident());
+                        } else if contender_pokemon.as_ref().unwrap().name == *pokemon {
+                            contender_team.retain(|p| p.name != *pokemon);
                             contender_pokemon = None;
                         }
                     }
@@ -134,9 +134,9 @@ pub async fn process_fight(
                         hp_left,
                     } => {
                         // and set the hp of the remaining pokemon accordingly, to carry it over to the next fight
-                        if challenger_pokemon.as_ref().unwrap().ident() == pokemon.ident() {
+                        if challenger_pokemon.as_ref().unwrap().name == *pokemon {
                             challenger_hp = *hp_left;
-                        } else if contender_pokemon.as_ref().unwrap().ident() == pokemon.ident() {
+                        } else if contender_pokemon.as_ref().unwrap().name == *pokemon {
                             contender_hp = *hp_left;
                         }
                     }
@@ -146,7 +146,7 @@ pub async fn process_fight(
                 }
 
                 // append the fight log to the main log
-                log.log.append(fight_log.log);
+                log.log.append(&mut fight_log.log);
             }
         }
 
