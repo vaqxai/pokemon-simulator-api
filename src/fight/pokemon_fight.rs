@@ -1,7 +1,7 @@
 use std::cmp::max;
 use anyhow::Result;
 
-use super::{FightEvent, FightLog};
+use super::{Effectiveness, FightEvent, FightLog};
 use crate::pokemon::Pokemon;
 
 /// Process a fight between two pokemon with a given amount of HP and return a log of the battle
@@ -104,6 +104,12 @@ pub async fn process_fight_with_hp(
         // total max dmg mult = 2.5
         // total min dmg mult = 0.1
 
+        let effectiveness = match damage_mult {
+            x if x > 1.8 => Effectiveness::SuperEffective,
+            x if x < 0.6 => Effectiveness::NotVeryEffective,
+            _ => Effectiveness::Normal,
+        };
+
         // 0.8 - 1.2
         let rand_mult = 0.8 + (rand::random::<f32>() * 0.4);
 
@@ -117,7 +123,8 @@ pub async fn process_fight_with_hp(
             attacker: attacker.name.clone(),
             defender: defender.name.clone(),
             damage: damage as u32,
-            hp_left: max(def_hp.round() as u32, 0)
+            hp_left: max(def_hp.round() as u32, 0),
+            effectiveness,
         };
 
         log.log.push(event);

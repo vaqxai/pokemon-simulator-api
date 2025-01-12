@@ -35,6 +35,8 @@ pub enum FightEvent {
         damage: u32,
         /// The amount of HP left on the defending Pokemon
         hp_left: u32,
+        /// Effectiveness
+        effectiveness: Effectiveness
     },
     /// A Pokemon faints
     Fainted {
@@ -83,6 +85,17 @@ pub enum FightStrategy {
 
     /// Choose a random pokemon
     Random,
+}
+
+/// Represents the effectiveness of a move in a Pokemon battle
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum Effectiveness {
+    /// The move is super effective
+    SuperEffective,
+    /// The move is not very effective
+    NotVeryEffective,
+    /// The move is normally effective
+    Normal,
 }
 
 impl FromStr for FightStrategy {
