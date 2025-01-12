@@ -1223,6 +1223,7 @@ dependencies = [
  "anyhow",
  "env_logger",
  "erased-serde",
+ "futures",
  "log",
  "neo4rs",
  "rand",

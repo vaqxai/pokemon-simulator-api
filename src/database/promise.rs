@@ -137,6 +137,6 @@ pub trait Promised: DbRepr + DbGet {
     where
         Self: Sized,
     {
-        Promise::from_ident_unchecked(self.get_db_identifier())
+        Promise::from_ident_unchecked(self.get_raw_identifier().to_string())
     }
 }

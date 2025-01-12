@@ -17,7 +17,7 @@
 #![deny(missing_docs)]
 #![deny(rustdoc::missing_crate_level_docs)]
 
-use std::str::FromStr;
+use std::{net::Ipv4Addr, str::FromStr};
 
 /// Module containing JSON-related types and functionality for API responses.
 pub mod json;
@@ -73,18 +73,27 @@ async fn rocket() -> _ {
     env_logger::init();
     let cors = make_cors().to_cors().expect("Error creating CORS fairing");
 
-    rocket::build().attach(cors).mount("/api", routes![
-        index,
-        pokemon::endpoints::get_pokemons,
-        pokemon::endpoints::add_pokemon,
-        trainer::endpoints::get_trainers,
-        trainer::endpoints::create_trainer,
-        trainer::endpoints::delete_trainer,
-        trainer::endpoints::get_trainer_pokemons,
-        trainer::endpoints::add_pokemon_to_trainer,
-        trainer::endpoints::remove_pokemon_from_trainer,
-        fight::endpoints::simulate_fight,
-    ])
+    let config = rocket::Config {
+        port: 8000,
+        address: Ipv4Addr::new(0, 0, 0, 0).into(),
+        ..rocket::Config::default()
+    };
+
+    rocket::build()
+        .configure(config)
+        .attach(cors)
+        .mount("/api", routes![
+            index,
+            pokemon::endpoints::get_pokemons,
+            pokemon::endpoints::add_pokemon,
+            trainer::endpoints::get_trainers,
+            trainer::endpoints::create_trainer,
+            trainer::endpoints::delete_trainer,
+            trainer::endpoints::get_trainer_pokemons,
+            trainer::endpoints::add_pokemon_to_trainer,
+            trainer::endpoints::remove_pokemon_from_trainer,
+            fight::endpoints::simulate_fight,
+        ])
 }
 
 /// Health check endpoint that returns an OK status.

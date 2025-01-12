@@ -23,15 +23,15 @@ pub struct Trainer {
 }
 
 impl DbRepr for Trainer {
-    const DB_IDENTIFIER_FIELD: &'static str = "name";
     const DB_NODE_KIND: &'static str = "Trainer";
-
-    fn get_raw_identifier(&self) -> &str {
-        &self.name
-    }
+    const DB_IDENTIFIER_FIELD: &'static str = "name";
 
     fn get_db_identifier(&self) -> String {
         format!("'{}'", sanitize(&self.name))
+    }
+
+    fn get_raw_identifier(&self) -> &str {
+        &self.name
     }
 }
 
