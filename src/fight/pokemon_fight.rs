@@ -1,3 +1,4 @@
+use std::cmp::max;
 use anyhow::Result;
 
 use super::{FightEvent, FightLog};
@@ -116,6 +117,7 @@ pub async fn process_fight_with_hp(
             attacker: attacker.name.clone(),
             defender: defender.name.clone(),
             damage: damage as u32,
+            hp_left: max(def_hp.round() as u32, 0)
         };
 
         log.log.push(event);

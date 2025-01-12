@@ -52,6 +52,11 @@ pub async fn create_trainer<'a>(trainer_name: String) -> JsonResult<'a> {
         return Err(JsonStatus::error("Name cannot be empty"));
     }
 
+    // do not allow duplicate trainers
+    if Trainer::get_first(&trainer_name).await.is_ok() {
+        return Err(JsonStatus::error("Trainer already exists"));
+    }
+
     let trainer = Trainer {
         name: trainer_name,
         team: vec![],
@@ -115,6 +120,11 @@ pub async fn add_pokemon_to_trainer<'a>(
         if p.ident() == pokemon.name {
             return Err(JsonStatus::error("Pokemon already in team"));
         }
+    }
+
+    // do not allow more than 6 pokemon in a team
+    if trainer.team.len() >= 6 {
+        return Err(JsonStatus::error("Team is full"));
     }
 
     trainer

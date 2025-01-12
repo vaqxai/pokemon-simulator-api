@@ -33,6 +33,8 @@ pub enum FightEvent {
         defender: String,
         /// The amount of damage dealt
         damage: u32,
+        /// The amount of HP left on the defending Pokemon
+        hp_left: u32,
     },
     /// A Pokemon faints
     Fainted {

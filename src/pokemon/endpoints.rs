@@ -14,6 +14,14 @@ pub async fn get_pokemons<'a>() -> JsonResult<'a> {
     Ok(JsonStatus::data_owned(pokemons))
 }
 
+/// Endpoint for fetching a single Pokemon by its ID.
+#[get("/pokemons/<name>")]
+pub async fn get_pokemon<'a>(name: String) -> JsonResult<'a> {
+    info!("Request to /api/pokemons/{}", name);
+    let pokemon = Pokemon::get_first(&name).await.map_err(JsonStatus::from_anyhow)?;
+    Ok(JsonStatus::data_owned(pokemon))
+}
+
 /// Endpoint to add a pokemon
 #[post("/pokemons", data = "<pokemon>")]
 pub async fn add_pokemon<'a>(pokemon: Json<Pokemon>) -> JsonResult<'a> {
@@ -25,6 +33,11 @@ pub async fn add_pokemon<'a>(pokemon: Json<Pokemon>) -> JsonResult<'a> {
 
     if pokemon.name.is_empty() {
         return Err(JsonStatus::error("Name cannot be empty"));
+    }
+
+    // do not allow duplicates
+    if Pokemon::get_first(&pokemon.name).await.is_ok() {
+        return Err(JsonStatus::error("Pokemon already exists"));
     }
 
     let mut pokemon = pokemon.into_inner();
