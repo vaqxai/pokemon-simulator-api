@@ -16,7 +16,7 @@ pub async fn process_fight(
     contender: &Trainer,
     challenger_strat: FightStrategy,
     contender_strat: FightStrategy,
-) -> Result<()> {
+) -> Result<FightLog> {
     // Resolve all pokemon of each team
     let mut challenger_team =
         futures::future::try_join_all(challenger.team.iter().map(|p| p.clone().resolve())).await?;
@@ -65,8 +65,11 @@ pub async fn process_fight(
     let mut challenger_hp = challenger_pokemon.as_ref().unwrap().stats.hp;
 
     while !challenger_team.is_empty() && !contender_team.is_empty() {
+        
+        let mut should_remove_challenger = false;
+        let mut should_remove_contender = false;
 
-        match (&challenger_pokemon, &contender_pokemon) {
+         match (&mut challenger_pokemon, &mut contender_pokemon) {
             (Some(chal_poke), None) => {
                 // choose a new pokemon for the contender or end the game
                 if challenger_team.is_empty() {
@@ -79,6 +82,10 @@ pub async fn process_fight(
                     Some(p) => Some(p),
                     None => return Err(anyhow::anyhow!("Contender's strategy produced no valid pokemon")),
                 };
+                log.log.push(FightEvent::ChoosePokemon {
+                    trainer: contender.name.clone(),
+                    pokemon: contender_pokemon.as_ref().unwrap().name.clone(),
+                });
             },
             (None, Some(cont_poke)) => {
                 // choose a new pokemon for the challenger or end the game
@@ -92,6 +99,10 @@ pub async fn process_fight(
                     Some(p) => Some(p),
                     None => return Err(anyhow::anyhow!("Challenger's strategy produced no valid pokemon")),
                 };
+                log.log.push(FightEvent::ChoosePokemon {
+                    trainer: challenger.name.clone(),
+                    pokemon: challenger_pokemon.as_ref().unwrap().name.clone(),
+                });
             },
             (None, None) => {
                 // Both cannot be fainted, this situation should not occur
@@ -100,8 +111,8 @@ pub async fn process_fight(
             (Some(chal_poke), Some(cont_poke)) => {
                 // fight
                 let mut fight_log = super::pokemon_fight::process_fight_with_hp(
-                    &chal_poke,
-                    &cont_poke,
+                    chal_poke,
+                    cont_poke,
                     challenger_hp,
                     contender_hp
                 ).await?;
@@ -112,12 +123,12 @@ pub async fn process_fight(
                 match pre_last_fight_event {
                     FightEvent::Fainted { pokemon} => {
                         // remove the fainted pokemon from the team
-                        if challenger_pokemon.as_ref().unwrap().name == *pokemon {
+                        if chal_poke.name == *pokemon {
                             challenger_team.retain(|p| p.name != *pokemon);
-                            challenger_pokemon = None;
-                        } else if contender_pokemon.as_ref().unwrap().name == *pokemon {
+                            should_remove_challenger = true;
+                        } else if cont_poke.name == *pokemon {
                             contender_team.retain(|p| p.name != *pokemon);
-                            contender_pokemon = None;
+                            should_remove_contender = true;
                         }
                     }
                     _ => {
@@ -134,9 +145,9 @@ pub async fn process_fight(
                         hp_left,
                     } => {
                         // and set the hp of the remaining pokemon accordingly, to carry it over to the next fight
-                        if challenger_pokemon.as_ref().unwrap().name == *pokemon {
+                        if chal_poke.name == *pokemon {
                             challenger_hp = *hp_left;
-                        } else if contender_pokemon.as_ref().unwrap().name == *pokemon {
+                        } else if cont_poke.name == *pokemon {
                             contender_hp = *hp_left;
                         }
                     }
@@ -148,10 +159,16 @@ pub async fn process_fight(
                 // append the fight log to the main log
                 log.log.append(&mut fight_log.log);
             }
+
         }
-
-
+        
+        if should_remove_challenger {
+            challenger_pokemon = None;
+        } else if should_remove_contender {
+            contender_pokemon = None;
+        }
+        
     }
 
-    Ok(())
+    Ok(log)
 }
