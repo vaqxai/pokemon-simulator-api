@@ -168,7 +168,7 @@ fn test_cors_configuration() {
 
     // Verify allowed methods
     let methods: Vec<_> = cors.allowed_methods.iter().collect();
-    assert!(methods.len() == 3);
+    assert_eq!(methods.len(), 3);
     assert!(methods.iter().any(|m| m.as_str() == "GET"));
     assert!(methods.iter().any(|m| m.as_str() == "POST"));
     assert!(methods.iter().any(|m| m.as_str() == "DELETE"));
