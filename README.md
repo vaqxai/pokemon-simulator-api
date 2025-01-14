@@ -44,7 +44,7 @@ The fight strategy changhes how a trainer picks their next pokemon upon a pokemo
 ### Prerequisites for Docker installation
 - Docker
 ### Docker Compose installation
-1. Copy the `docker-compose.yml` file from the repository to your machine
+1. Copy the [`docker-compose.yml`](https://github.com/vaqxai/pokemon-simulator-api/blob/main/docker-compose.yml) file from the repository to your machine
 2. 
     ```
     docker compose up -d
