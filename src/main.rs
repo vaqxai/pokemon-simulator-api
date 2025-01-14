@@ -183,7 +183,7 @@ async fn rocket() -> _ {
         let mut def_cfg = DEFAULT_CONFIG_FILE.to_string();
 
         def_cfg = def_cfg + "host = \"" + db_host + "\"\n";
-        def_cfg = def_cfg + "port = \"" + db_port + "\"\n";
+        def_cfg = def_cfg + "port = " + db_port + "\n";
         def_cfg = def_cfg + "username = \"" + db_user + "\"\n";
         def_cfg = def_cfg + "password = \"" + db_pass + "\"\n";
         
