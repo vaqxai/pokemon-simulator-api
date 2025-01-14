@@ -39,3 +39,30 @@ The fight strategy changhes how a trainer picks their next pokemon upon a pokemo
 - `StrongestSum` - Always choose the pokemon that has the highest atk+def sum
 - `StrongestType` - If you can, choose a pokemon that has the best type advantage over the current enemy pokemon, or, if not possible, use `StrongestSum` instead
 - `Random` - Always choose a random pokemon
+
+## Pokemon Fight Algorithm
+1. The pokemon with the highest `AGI`lity stat attacks first
+2. The base damage is the pokemon's `ATK` (attack) stat
+3. The type damage multiplier is calculated as follows, starting with a multiplier of `1`
+  a) If the attacker's primary type is "Strong Against" the defender's primary type, add `0.375` to the type damage multiplier
+  b) If the attacker's primary type is "Weak Against" the defender's primary type, subtract `0.225` from the type damage multiplier
+  c) If the defender has a secondary type, and the attacker's primary type is "Strong Against" it, add `0.375` to the type damage multiplier
+  d) If the defender has a secondary type, and the attacker's primary type is "Weak Against" it, subtract `0.225` from the type damage multiplier
+  e) If the attacker has a secondary type, and the defender's primary type is "Weak Against" it, add `0.375` to the type damage multiplier
+  f) If the attacker has a secondary type, and the defender's primary type is "Strong Against" it, subtract `0.225` from the type damage multiplier
+  g) If both pokemon have a secondary type, and the defender's is "Weak Against" the attacker's, add `0.375` to the type damage multiplier
+  h) If both pokemon have a secondary type, and the defender's is "Strong Against" the attacker's, subtract `0.225` from the type damage multiplier
+4. The maximum type damage multiplier is `2.5`, the minimum is `0.1`. A type damage multiplier above `1.8` means an attack is "Super effective", while a type damage multiplier below `0.6` means an attack is "Not very effective"
+5. A random multiplier between `0.8` and `1.2` is calculated
+6. A defense multiplier is calculated by dividing the defender's `DEF`ense stat by the maximum value of `250.0`, multiplied by `0.75`, then subtracted from `1.0`, to give a total defense multiplier (which multiplies the damage incoming to the defender) between `0.0` for a `0 DEF` stat, and `0.75` for a `250 DEF` stat
+7. The base damage is multiplied by the type damage multiplier, the random multiplier, and the defense multiplier.
+8. The final damage is subtracted from the defender's `HP` (hit points) stat.
+9. If the defender's `HP` falls below zero, a fight is concluded.
+10. Otherwise, the roles of the attacker and the defender are reversed, the remaining `HP` is carried over to the next round, and the fight continues until one of the pokemons' `HP` falls to zero.
+
+## Trainer Fight Algorithm
+1. The trainer picked as the `contender` picks their pokemon first. If they've selected the `StrongestType` strategy, they use `StrongestSum` for their first pokemon instead (as the other party has yet to choose their pokemon)
+2. The trainer pickes as the `challenger` picks their pokemon according to their strategy.
+3. The two pokemon fight using the regular Pokemon Fight Algorithm
+4. The winner's remaining `HP` is carried over to the next round, and the party whose pokemon fainted picks a new one using their strategy.
+5. The first party to run out of pokemon loses the battle.
