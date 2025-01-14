@@ -82,8 +82,8 @@ pub trait DbRepr {
 
 /// Sanitize a string for use in a cypher query
 pub fn sanitize(s: &str) -> String {
-    // 1. remove all backslashes
-    let mut s = s.replace("\\", "");
+    // 1. escape all backslashes
+    let mut s = s.replace("\\", "\\\\");
     // 2. escape all quotes and double quotes
     s = s.replace("'", "\\'");
     s = s.replace("\"", "\\\"");
