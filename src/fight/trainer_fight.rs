@@ -78,9 +78,10 @@ pub async fn process_fight(
          match (&mut challenger_pokemon, &mut contender_pokemon) {
             (Some(chal_poke), None) => {
                 // choose a new pokemon for the contender or end the game
-                if challenger_team.is_empty() {
+                if contender_team.is_empty() {
                     // challenger has no more pokemon, contender wins
-                    log.log.push(process_victory(contender.name.clone(), &contender_team).await);
+                    log.log.push(process_victory(challenger.name.clone(), &challenger_team).await);
+                    break;
                 }
 
                 contender_pokemon = match
@@ -95,9 +96,10 @@ pub async fn process_fight(
             },
             (None, Some(cont_poke)) => {
                 // choose a new pokemon for the challenger or end the game
-                if contender_team.is_empty() {
+                if challenger_team.is_empty() {
                     // contender has no more pokemon, challenger wins
-                    log.log.push(process_victory(challenger.name.clone(), &challenger_team).await);
+                    log.log.push(process_victory(contender.name.clone(), &contender_team).await);
+                    break;
                 }
 
                 challenger_pokemon = match
