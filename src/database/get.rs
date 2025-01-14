@@ -1,6 +1,7 @@
 use anyhow::Result;
 use neo4rs::Node;
 use std::pin::Pin;
+use log::debug;
 
 use super::{DbHandle, DbRepr, sanitize};
 
@@ -14,13 +15,17 @@ async fn get_db_node(id_name: &str, kind: &str, database_identifier: &str) -> Re
         database_identifier = format!("'{}'", sanitize(&database_identifier));
     }
 
+    let query = format!(
+                "MATCH (n:{}) WHERE n.{} = {} RETURN n;",
+                kind, id_name, &database_identifier
+                );
+
+    debug!("Getting Node: {}", query);
+
     let mut q_out = db
         .inner
         .execute(
-            format!(
-                "MATCH (n:{}) WHERE n.{} = {} RETURN n;",
-                kind, id_name, &database_identifier
-            )
+            query
             .into(),
         )
         .await?;
