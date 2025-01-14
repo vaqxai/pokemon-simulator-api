@@ -62,7 +62,7 @@ The fight strategy changhes how a trainer picks their next pokemon upon a pokemo
 
 ## Trainer Fight Algorithm
 1. The trainer picked as the `contender` picks their pokemon first. If they've selected the `StrongestType` strategy, they use `StrongestSum` for their first pokemon instead (as the other party has yet to choose their pokemon)
-2. The trainer pickes as the `challenger` picks their pokemon according to their strategy.
+2. The trainer picked as the `challenger` picks their pokemon according to their strategy.
 3. The two pokemon fight using the regular Pokemon Fight Algorithm
 4. The winner's remaining `HP` is carried over to the next round, and the party whose pokemon fainted picks a new one using their strategy.
 5. The first party to run out of pokemon loses the battle.
