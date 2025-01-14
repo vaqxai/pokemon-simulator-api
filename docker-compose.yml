@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: ghcr.io/vaqxai/pokemon-simulator-api
+    image: ghcr.io/vaqxai/pokemon-simulator-api:main
     volumes:
       - $HOME/poke_backend_cfg:/config
     depends_on:
@@ -24,7 +24,7 @@ services:
       - $HOME/neo4j/logs:/logs
 
   front:
-    image: ghcr.io/daniel-k-bracki/pokemon-simulator-frontend
+    image: ghcr.io/daniel-k-bracki/pokemon-simulator-frontend:main
     ports:
       - "80:3000"
     depends_on:
