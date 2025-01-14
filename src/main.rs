@@ -112,7 +112,7 @@ const DEFAULT_CONFIG_FILE: &str = "\
 const DEFAULT_DB_HOST: &str = "neo4j";
 const DEFAULT_DB_PORT: &str = "7687";
 const DEFAULT_DB_USER: &str = "neo4j";
-const DEFAULT_DB_PASS: &str = "neo4j_pa$$w0rd";
+const DEFAULT_DB_PASS: &str = "pass";
 
 /// Creates a CORS fairing with the specified configuration.
 /// Allows all origins, GET, POST, and DELETE methods, and credentials.
@@ -197,9 +197,7 @@ async fn rocket() -> _ {
             warn!("This could cause further issues.");
             warn!("Error writing default config file \"config/config.toml\": {e}");
         };
-    } else {
-        warn!("Config file already exists. Not overwriting.");
-    }
+    }warn!("Config file already exists. Not overwriting.");
 
     let config = rocket::Config {
         port: 8000,
