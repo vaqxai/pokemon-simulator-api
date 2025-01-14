@@ -70,7 +70,7 @@ pub async fn process_fight(
     let mut contender_hp = contender_pokemon.as_ref().unwrap().stats.hp;
     let mut challenger_hp = challenger_pokemon.as_ref().unwrap().stats.hp;
 
-    while !challenger_team.is_empty() && !contender_team.is_empty() {
+    loop {
         
         let mut should_remove_challenger = false;
         let mut should_remove_contender = false;
