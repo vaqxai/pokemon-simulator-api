@@ -40,6 +40,46 @@ The fight strategy changhes how a trainer picks their next pokemon upon a pokemo
 - `StrongestType` - If you can, choose a pokemon that has the best type advantage over the current enemy pokemon, or, if not possible, use `StrongestSum` instead
 - `Random` - Always choose a random pokemon
 
+## Installation
+### Prerequisites for Docker installation
+- Docker
+### Docker Installation
+1.
+    ```
+    docker run --name pokemons-backend --publish=<api_port>:8000 -d ghcr.io/vaqxai/pokemon-simulator-api:main
+    ```
+2. 
+    ```
+    docker run --name neo4j --publish=7474:7474 --publish=7687:7687 --volume=$HOME/neo4j/data:/data neo4j
+    ```
+3.
+    ```
+    docker network create pokemons-database
+    docker network connect pokemons-database neo4j
+    docker network connect pokemons-database pokemons-backend
+    ```
+4. 
+    ```
+    docker network inspect pokemons-database
+    ```
+5.  Write down neo4j's internal IP Address
+6.
+    ```
+    docker cp pokemons-backend:/Config.toml Config.toml
+    vi Config.toml (or use your preferred text editor), insert the correct internal docker IP, leave the default port unless you changed it
+    docker cp Config.toml pokemons-backend:/target/release/config.toml
+    docker restart pokemons-backend
+    ```
+### Prerequisites for manual installation
+- An instance of `neo4j` database
+- Rust nightly
+### Manual installation
+1.
+    ```
+    cargo build --release
+    ```
+2. Configure your database's connect info, copying the executable `target/release/pokemon-simulator`(`.exe`) and `Config.toml` from the project's root directory into the same folder, and editing `Config.toml`, rename it to `config.toml`
+3. Run the generated executable 
 ## Pokemon Fight Algorithm
 1. The pokemon with the highest `AGI`lity stat attacks first
 2. The base damage is the pokemon's `ATK` (attack) stat
