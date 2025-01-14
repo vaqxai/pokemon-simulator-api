@@ -45,25 +45,27 @@ The fight strategy changhes how a trainer picks their next pokemon upon a pokemo
 - Docker
 ### Docker Installation
 1.
+    You can use the default `8000` port as `<api_port>` or choose your own. This is the port where the API will be listening for HTTP requests.
     ```
     docker run --name pokemons-backend --publish=<api_port>:8000 -d ghcr.io/vaqxai/pokemon-simulator-api:main
     ```
-2. 
+
+3. 
     ```
     docker run --name neo4j --publish=7474:7474 --publish=7687:7687 --volume=$HOME/neo4j/data:/data neo4j
     ```
-3.
+4.
     ```
     docker network create pokemons-database
     docker network connect pokemons-database neo4j
     docker network connect pokemons-database pokemons-backend
     ```
-4. 
+5. 
     ```
     docker network inspect pokemons-database
     ```
-5.  Write down neo4j's internal IP Address
-6.
+6.  Write down neo4j's internal IP Address
+7.
     ```
     docker cp pokemons-backend:/Config.toml Config.toml
     vi Config.toml (or use your preferred text editor), insert the correct internal docker IP, leave the default port unless you changed it
