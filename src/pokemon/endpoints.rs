@@ -36,7 +36,8 @@ pub async fn add_pokemon<'a>(mut pokemon: Json<Pokemon>) -> JsonResult<'a> {
     }
 
     // remove slashes because of GET incompatiblity
-    pokemon.name = pokemon.name.replace("//", "");
+    pokemon.name = pokemon.name.replace("\\", "");
+    pokemon.name = pokemon.name.replace("/", "");
 
     // do not allow duplicates
     if Pokemon::get_first(&pokemon.name).await.is_ok() {
