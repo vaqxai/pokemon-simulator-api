@@ -24,7 +24,7 @@ pub async fn get_pokemon<'a>(name: String) -> JsonResult<'a> {
 
 /// Endpoint to add a pokemon
 #[post("/pokemons", data = "<pokemon>")]
-pub async fn add_pokemon<'a>(pokemon: Json<Pokemon>) -> JsonResult<'a> {
+pub async fn add_pokemon<'a>(pokemon: mut Json<Pokemon>) -> JsonResult<'a> {
     info!("Request to /api/pokemons");
 
     if pokemon.name.len() > 30 {
@@ -34,6 +34,9 @@ pub async fn add_pokemon<'a>(pokemon: Json<Pokemon>) -> JsonResult<'a> {
     if pokemon.name.is_empty() {
         return Err(JsonStatus::error("Name cannot be empty"));
     }
+
+    // remove slashes because of GET incompatiblity
+    pokemon.name = pokemon.name.replace("\\", "");
 
     // do not allow duplicates
     if Pokemon::get_first(&pokemon.name).await.is_ok() {
