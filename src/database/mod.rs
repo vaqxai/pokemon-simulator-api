@@ -29,7 +29,7 @@ pub struct DbHandle {
 impl DbHandle {
     /// Connects to the database using the configuration in `config.toml`
     pub async fn connect() -> Result<Self> {
-        let cfg = fs::read_to_string("config.toml")?.parse::<toml::Table>()?;
+        let cfg = fs::read_to_string("../../config/config.toml")?.parse::<toml::Table>()?;
         let url = format!(
             "neo4j://{}:{}",
             cfg["database"]["host"]

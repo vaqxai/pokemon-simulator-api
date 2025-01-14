@@ -1,6 +1,0 @@
-[database]
-host = "127.0.0.1"
-port = 7687
-username = "neo4j"
-password = "neo4j_pa$$w0rd" # TODO: Don't store the password here
-# Use an ENV VAR secret instead

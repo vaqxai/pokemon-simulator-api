@@ -17,7 +17,7 @@
 #![deny(missing_docs)]
 #![deny(rustdoc::missing_crate_level_docs)]
 
-use std::{net::Ipv4Addr, str::FromStr};
+use std::{env, net::Ipv4Addr, str::FromStr};
 
 /// Module containing JSON-related types and functionality for API responses.
 pub mod json;
@@ -38,11 +38,20 @@ pub mod fight;
 mod tests;
 use crate::json::JsonResult;
 use json::JsonStatus;
-use log::info;
+use log::{warn, info};
 use rocket_cors::{AllowedMethods, AllowedOrigins, CorsOptions};
 
 #[macro_use]
 extern crate rocket;
+
+const DEFAULT_CONFIG_FILE: &str = "\
+[database]
+";
+
+const DEFAULT_DB_HOST: &str = "neo4j";
+const DEFAULT_DB_PORT: &str = "7687";
+const DEFAULT_DB_USER: &str = "neo4j";
+const DEFAULT_DB_PASS: &str = "neo4j_pa$$w0rd";
 
 /// Creates a CORS fairing with the specified configuration.
 /// Allows all origins, GET, POST, and DELETE methods, and credentials.
@@ -72,6 +81,64 @@ fn make_cors() -> CorsOptions {
 async fn rocket() -> _ {
     env_logger::init();
     let cors = make_cors().to_cors().expect("Error creating CORS fairing");
+
+    let args = env::args().collect::<Vec<_>>();
+
+    if !args.is_empty() {
+        info!("Running as {}", args[0].to_string());
+        info!("Working directory is {}", std::env::current_dir().as_ref().unwrap().to_str().unwrap());
+    };
+
+    let db_host: &str = if args.len() > 1 && args[1].len() > 8 && args[1][..8] == *"DB_HOST=" {
+        info!("Setting configured database host to: {}", args[1][8..].to_string());
+        &args[1][8..]
+    } else {
+        DEFAULT_DB_HOST
+    };
+
+    let db_port: &str = if args.len() > 2 && args[2].len() > 8 && args[2][..8] == *"DB_PORT=" {
+        info!("Setting configured database port to: {}", args[2][8..].to_string());
+        &args[2][8..]
+    } else {
+        DEFAULT_DB_PORT
+    };
+
+    let db_user: &str = if args.len() > 3 && args[3].len() > 8 && args[3][..8] == *"DB_USER=" {
+        info!("Setting configured database user to: {}", args[3][8..].to_string());
+        &args[3][8..]
+    } else {
+        DEFAULT_DB_USER
+    };
+
+    let db_pass: &str = if args.len() > 4 && args[4].len() > 8 && args[4][..8] == *"DB_PASS=" {
+        info!("Setting configured database password to: {}", args[4][8..].to_string());
+        &args[4][8..]
+    } else {
+        DEFAULT_DB_PASS
+    };
+
+    // Create default config file for the database, if it doesn't exist
+    if std::fs::exists("config/config.toml").is_ok_and(|e| !e) {
+        let mut def_cfg = DEFAULT_CONFIG_FILE.to_string();
+
+        def_cfg = def_cfg + "host = \"" + db_host + "\"\n";
+        def_cfg = def_cfg + "port = \"" + db_port + "\"\n";
+        def_cfg = def_cfg + "username = \"" + db_user + "\"\n";
+        def_cfg = def_cfg + "password = \"" + db_pass + "\"\n";
+        
+        info!("Generated config file:\n{}", def_cfg);
+
+        if let Err(e) = std::fs::write(
+            "config/config.toml",
+            def_cfg.as_bytes()
+        ) {
+            warn!("The config file could not be created, but the program will continue anyway.");
+            warn!("This could cause further issues.");
+            warn!("Error writing default config file \"config/config.toml\": {e}");
+        };
+    } else {
+        warn!("Config file already exists. Not overwriting.");
+    }
 
     let config = rocket::Config {
         port: 8000,
