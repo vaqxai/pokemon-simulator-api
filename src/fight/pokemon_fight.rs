@@ -30,7 +30,8 @@ pub async fn process_fight_with_hp(
     mut contender_hp: u32,
     mut challenger_hp: u32
 ) -> Result<FightLog> {
-    let starting_pokemon = if contender.stats.agility > challenger.stats.agility {
+    // This is flipped because the starting pokemon is swapped by the last_to_attack logic
+    let starting_pokemon = if contender.stats.agility <= challenger.stats.agility {
         contender
     } else {
         challenger
