@@ -69,7 +69,7 @@ The fight strategy changhes how a trainer picks their next pokemon upon a pokemo
     ```
     docker cp pokemons-backend:/Config.toml Config.toml
     vi Config.toml (or use your preferred text editor), insert the correct internal docker IP, leave the default port unless you changed it
-    docker cp Config.toml pokemons-backend:/target/release/config.toml
+    docker cp Config.toml pokemons-backend:config.toml
     docker restart pokemons-backend
     ```
 ### Prerequisites for manual installation
