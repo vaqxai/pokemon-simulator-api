@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    image: ghcr.io/vaqxai/pokemon-simulator-api
+    volumes:
+      - $HOME/poke_backend_cfg:/config
+    depends_on:
+      - neo4j
+    environment:
+      - RUST_LOG=debug
+    ports:
+      - "8000:8000"
+
+  neo4j:
+    image: neo4j:latest
+    environment:
+      - NEO4J_AUTH=neo4j/neo4j_pa$$w0rd
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - $HOME/neo4j/data:/data
+      - $HOME/neo4j/logs:/logs
+
+  front:
+    image: ghcr.io/daniel-k-bracki/pokemon-simulator-frontend
+    ports:
+      - "80:3000"
+    depends_on:
+      - backend
+
+volumes:
+  neo4j_data:
+  neo4j_logs:

@@ -1,0 +1,5 @@
+[database]
+host = "neo4j" # Works because of internal docker DNS routing
+port = 7687
+username = "neo4j"
+password = "neo4j_pa$$w0rd"
